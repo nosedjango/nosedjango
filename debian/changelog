@@ -1,3 +1,10 @@
+python-nosedjango (0.8.1-0ppa1) lucid; urgency=low
+
+  * New upstream release 0.8.1
+  * Add CHANGES to docs
+
+ -- Jyrki Pulliainen <jyrki@dywypi.org>  Fri, 20 Aug 2010 01:12:08 +0300
+
 python-nosedjango (0.8.0-0ppa1) lucid; urgency=low
 
   * Remove debianization from master
