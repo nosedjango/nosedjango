@@ -62,6 +62,7 @@ class NoseDjango(Plugin):
         self.orig_savepoint_rollback = transaction.savepoint_rollback
         self.orig_enter = transaction.enter_transaction_management
         self.orig_leave = transaction.leave_transaction_management
+        self.orig_managed = transaction.managed
 
         transaction.commit = _dummy
         transaction.rollback = _dummy
@@ -69,6 +70,7 @@ class NoseDjango(Plugin):
         transaction.savepoint_rollback = _dummy
         transaction.enter_transaction_management = _dummy
         transaction.leave_transaction_management = _dummy
+        transaction.managed = _dummy
 
     def restore_transaction_support(self, transaction):
         transaction.commit = self.orig_commit
@@ -76,6 +78,7 @@ class NoseDjango(Plugin):
         transaction.savepoint_commit = self.orig_savepoint_commit
         transaction.savepoint_rollback = self.orig_savepoint_rollback
         transaction.enter_transaction_management = self.orig_enter
+        transaction.managed = self.orig_managed
         transaction.leave_transaction_management = self.orig_leave
 
     def options(self, parser, env):
@@ -203,10 +206,12 @@ class NoseDjango(Plugin):
     def afterTest(self, test):
         # Restore transaction support on tests
         from django.db import connection, transaction
+        from django.test import TransactionTestCase
         from django.core.management import call_command
 
         transaction_support = self._has_transaction_support(test)
-        if transaction_support:
+        if transaction_support and not isinstance(
+            test.test, TransactionTestCase):
             self.restore_transaction_support(transaction)
             transaction.rollback()
             transaction.leave_transaction_management()
@@ -222,16 +227,22 @@ class NoseDjango(Plugin):
             # short circuit if no settings file can be found
             return
 
+        from django.test import TransactionTestCase
         from django.core.management import call_command
         from django.core.urlresolvers import clear_url_caches
         from django.db import connection, transaction
         from django.core import mail
+        from django.conf import settings
 
         mail.outbox = []
 
         transaction_support = self._has_transaction_support(test)
-        if transaction_support:
-            transaction.enter_transaction_management()
+        if transaction_support and not isinstance(
+            test.test, TransactionTestCase):
+            # If test is a django.TransactionTestCase, it already does
+            # transactions, so let's not brother about it
+            settings.TRANSACTIONS_MANAGED = True
+            transaction.enter_transaction_management(managed=True)
             transaction.managed(True)
             self.disable_transaction_support(transaction)
 
@@ -245,11 +256,11 @@ class NoseDjango(Plugin):
         if isinstance(test, nose.case.Test) and \
             isinstance(test.test, nose.case.MethodTestCase) and \
             hasattr(test.context, 'urls'):
-                # We have to use this slightly awkward syntax due to the fact
-                # that we're using *args and **kwargs together.
-                self.old_urlconf = settings.ROOT_URLCONF
-                settings.ROOT_URLCONF = self.urls
-                clear_url_caches()
+            # We have to use this slightly awkward syntax due to the fact
+            # that we're using *args and **kwargs together.
+            self.old_urlconf = settings.ROOT_URLCONF
+            settings.ROOT_URLCONF = self.urls
+            clear_url_caches()
 
 
     def finalize(self, result=None):

@@ -1,3 +1,10 @@
+0.8.1
+-----
+
+A bugfix release, released 2010-08-20
+
+* Fix transaction management problems when using django.test.TestCase
+
 0.8.0
 -----
 

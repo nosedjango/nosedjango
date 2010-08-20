@@ -39,14 +39,6 @@ following options:
                             <http://docs.djangoproject.com/en/dev/topics/testing/#django.test.simple.DjangoTestSuiteRunner>`_).
                             Default: false.
 
-Building Debian package
------------------------
-
-Plugin can also be installed as a Debian package::
-
-  dpkg-checkbuilddeps
-  dpkg-buildpackage -us -uc -rfakeroot
-  sudo debi
 
 Testing
 -------
@@ -76,8 +68,9 @@ A successful run should hit *14* test cases excercising :
     * mixes of doctests and test modules
     * docstrings in models
 
+
 Transaction support
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 As default, nosedjango plugin runs the tests within a transaction.
 This behaviour can be altered in two ways:
@@ -99,8 +92,9 @@ This behaviour can be altered in two ways:
   Note, that this implies to *all* tests in the same context (ie.
   class).
 
+
 Using fixtures
-~~~~~~~~~~~~~~
+--------------
 
 Nosedjango supports loading fixtures from test's context. Fixtures are
 generated the same way as they are in the traditional Django test
@@ -116,7 +110,7 @@ module or class)
 
 
 Sample test run
-~~~~~~~~~~~~~~~
+---------------
 ::
 
   $ nosetests -v --with-django --with-doctest --doctest-tests --doctest-tests
@@ -147,14 +141,40 @@ Authors
 -------
 
 This version is maintained by Jyrki Pulliainen
-<jyrki.pulliainen@inoi.fi>.
+<jyrki.pulliainen@dywypi.org>.
 
 Original plugin courtesy of Victor Ng <crankycoder@gmail.com> who
 rewrote Jason Pellerin's original nose-django plugin.
+
+For all contributors, see *AUTHORS* file.
+
+Contributing
+------------
+
+This project and it's issues are currently hosted in github_. If you
+find a bug or have a feature request, use `github's issue tracker`_
+for that.
+
+.. _github: http://github.com/inoi/nosedjango/
+.. _github's issue tracker: http://github.com/inoi/nosedjango/issues
+
+Patches are welcome :)
+
+Debian packaging
+----------------
+
+Prebuild Debian packages are available at PPA_. These are build for
+Ubuntu 10.04 (also known as Lucid Lynx). Debianization is done using
+git-buildpackage. Debianization resides in git in branch called
+debian_.
+
+.. _PPA: https://launchpad.net/~jyrki-pulliainen/+archive/ppa
+.. _debian: http://github.com/inoi/nosedjango/tree/debian
+
 
 License
 -------
 
 This software is licensed with GNU LESSER GENERAL PUBLIC LICENSE
-version 3 or (at your option) any later version. See `COPYING` for
+version 3 or (at your option) any later version. See *COPYING* for
 more details.
