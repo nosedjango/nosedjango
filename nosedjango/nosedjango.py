@@ -206,12 +206,18 @@ class NoseDjango(Plugin):
     def afterTest(self, test):
         # Restore transaction support on tests
         from django.db import connection, transaction
-        from django.test import TransactionTestCase
         from django.core.management import call_command
 
         transaction_support = self._has_transaction_support(test)
-        if transaction_support and not isinstance(
-            test.test, TransactionTestCase):
+        try:
+            # Django 1.0 doesn't have TransactionTestCase
+            from django.test import TransactionTestCase
+            if isinstance(test.test, TransactionTestCase):
+                transaction_support = False
+        except ImportError:
+            pass
+
+        if transaction_support:
             self.restore_transaction_support(transaction)
             transaction.rollback()
             transaction.leave_transaction_management()
@@ -227,7 +233,6 @@ class NoseDjango(Plugin):
             # short circuit if no settings file can be found
             return
 
-        from django.test import TransactionTestCase
         from django.core.management import call_command
         from django.core.urlresolvers import clear_url_caches
         from django.db import connection, transaction
@@ -237,12 +242,19 @@ class NoseDjango(Plugin):
         mail.outbox = []
 
         transaction_support = self._has_transaction_support(test)
-        if transaction_support and not isinstance(
-            test.test, TransactionTestCase):
+        try:
+            # Django 1.0 doesn't have TransactionTestCase
+            from django.test import TransactionTestCase
+            if isinstance(test.test, TransactionTestCase):
+                transaction_support = False
+        except ImportError:
+            pass
+
+        if transaction_support:
             # If test is a django.TransactionTestCase, it already does
             # transactions, so let's not brother about it
             settings.TRANSACTIONS_MANAGED = True
-            transaction.enter_transaction_management(managed=True)
+            transaction.enter_transaction_management()
             transaction.managed(True)
             self.disable_transaction_support(transaction)
 
