@@ -10,10 +10,16 @@ import nose.case
 from selenium.webdriver import Firefox as FirefoxWebDriver
 from selenium.webdriver import Chrome as ChromeDriver
 from selenium.webdriver import Remote as RemoteDriver
-from selenium.webdriver.common.exceptions import (
-    ErrorInResponseException,
-    WebDriverException,
-)
+try:
+    from selenium.webdriver.common.exceptions import (
+        ErrorInResponseException,
+        WebDriverException,
+    )
+except ImportError:
+    from selenium.common.exceptions import (
+        ErrorInResponseException,
+        WebDriverException,
+    )
 
 from nosedjango.plugins.base_plugin import Plugin
 
