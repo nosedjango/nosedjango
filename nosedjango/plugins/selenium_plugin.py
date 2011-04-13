@@ -98,9 +98,8 @@ class SeleniumPlugin(Plugin):
             if current >= timeout:
                 raise urllib2.URLError('timeout')
 
-        # Set the logging level to INFO
+        monkey_patch_execute(self._driver)
         return self._driver
-
 
     def finalize(self, result):
         driver = self.get_driver()
@@ -144,6 +143,7 @@ class SeleniumPlugin(Plugin):
                     driver.switch_to_window(self._current_windows_handle)
         # deal with the onbeforeunload if it is there until selenium has a
         # way to do so in the api
+        self._driver.counter = 0
         try:
             driver.execute_script('window.onbeforeunload = function(){};')
         except (ErrorInResponseException, AssertionError):
@@ -151,7 +151,6 @@ class SeleniumPlugin(Plugin):
         except WebDriverException:
             driver.quit()
             self._driver = None
-
 
     def handleError(self, test, err):
         if isinstance(test, nose.case.Test) and \
@@ -181,4 +180,12 @@ class SeleniumPlugin(Plugin):
         # we have to check to see if it is there before using it
         if hasattr(driver, 'save_screenshot'):
             driver.save_screenshot(ss_file)
+
+def monkey_patch_execute(driver):
+    execute = driver.execute
+    def new_execute(self, *args, **kwargs):
+        counter = getattr(driver, 'counter', 0)
+        driver.counter = counter + 1
+        return execute(self, *args, **kwargs)
+    driver.execute = new_execute
 
