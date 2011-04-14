@@ -104,7 +104,7 @@ class SeleniumPlugin(Plugin):
     def finalize(self, result):
         driver = self.get_driver()
         if driver:
-            self.get_driver().quit()
+            driver.quit()
 
         if self.xvfb_process:
             os.kill(self.xvfb_process.pid, 9)
@@ -131,6 +131,7 @@ class SeleniumPlugin(Plugin):
             self._current_windows_handle = driver.get_current_window_handle()
 
     def afterTest(self, test):
+        self._driver.roundtrip_counter = 0
         driver = getattr(test.test, 'driver', False)
         if not driver:
             return
@@ -173,20 +174,37 @@ class SeleniumPlugin(Plugin):
 
 def monkey_patch_methods(driver):
     # Keep track of how many trips to execute are made
-    execute = driver.execute
+    old_execute = driver.__class__.execute
     def new_execute(self, *args, **kwargs):
-        counter = getattr(driver, 'counter', 0)
-        driver.counter = counter + 1
-        return execute(self, *args, **kwargs)
-    driver.execute = new_execute
+        roundtrip_counter = getattr(driver, 'roundtrip_counter', 0)
+        driver.roundtrip_counter = roundtrip_counter + 1
+        return old_execute(self, *args, **kwargs)
+    driver.__class__.execute = new_execute
 
     # If there is an alert when trying to get a page, accept it
-    get = driver.get
+    old_get = driver.__class__.get
     def new_get(self, *args, **kwargs):
-        get(self, *args, **kwargs)
-        alert = driver.switch_to_alert()
-        try:
-            alert.accept()
-        except WebDriverException:
-            pass
-    driver.get = new_get
+        old_get(self, *args, **kwargs)
+        accept_alert(driver)
+    driver.__class__.get = new_get
+
+    # Need to move away from the page to ensure if there is an alert on the
+    # page it gets dealt with prior to closing the window
+    old_close = driver.__class__.close
+    def new_close(self, *args, **kwargs):
+        self.get('www.google.com') # Random page to ensure page is changed
+        old_close(self, *args, **kwargs)
+    driver.__class__.close = new_close
+
+    old_quit = driver.__class__.quit
+    def new_quit(self, *args, **kwargs):
+        self.close() # Need to handle onbeforeunload alerts
+        old_quit(self, *args, **kwargs)
+    driver.__class__.quit = new_quit
+
+def accept_alert(driver):
+    alert = driver.switch_to_alert()
+    try:
+        alert.accept()
+    except WebDriverException:
+        pass
