@@ -4,6 +4,7 @@ import subprocess
 import urllib2
 import httplib
 import time
+from pprint import pprint
 
 import nose.case
 
@@ -44,6 +45,9 @@ class SeleniumPlugin(Plugin):
         parser.add_option('--selenium-port',
                           help='The port for the selenium server',
                           default='4444')
+        parser.add_option('--track-stats',
+                          help='After the suite is run print a table of test name/runtime/number of trips to the server.  defaults to ordering by trips to the server',
+                          default=None)
         Plugin.options(self, parser, env)
 
     def configure(self, options, config):
@@ -65,6 +69,9 @@ class SeleniumPlugin(Plugin):
         if options.headless:
             self.run_headless = True
             self.x_display = int(options.headless)
+        if options.track_stats and options.track_stats not in ('trips', 'runtime'):
+            raise RuntimeError('--track-stats must be "trips" or "runtime"')
+        self._track_stats = options.track_stats
         Plugin.configure(self, options, config)
 
     def get_driver(self):
@@ -102,6 +109,14 @@ class SeleniumPlugin(Plugin):
         return self._driver
 
     def finalize(self, result):
+        if self._track_stats:
+            print '-' * 80
+            if self._track_stats == 'runtime':
+                order = 1
+            elif self._track_stats == 'trips':
+                order = 2
+            pprint(sorted(self.times, key=lambda x: x[order]))
+            print '-' * 80
         driver = self.get_driver()
         if driver:
             driver.quit()
@@ -122,6 +137,7 @@ class SeleniumPlugin(Plugin):
             os.environ['DISPLAY'] = ':%s' % xvfb_display
 
     def beforeTest(self, test):
+        self.start_time = time.time()
         driver = self.get_driver()
         logging.getLogger().setLevel(logging.INFO)
         setattr(test.test, 'driver', driver)
@@ -131,6 +147,9 @@ class SeleniumPlugin(Plugin):
             self._current_windows_handle = driver.get_current_window_handle()
 
     def afterTest(self, test):
+        if not hasattr(self, 'times'):
+            self.times = []
+        self.times.append((test.address()[2], int(time.time() - self.start_time), self._driver.roundtrip_counter))
         self._driver.roundtrip_counter = 0
         driver = getattr(test.test, 'driver', False)
         if not driver:
