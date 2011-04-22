@@ -109,7 +109,7 @@ class SeleniumPlugin(Plugin):
         return self._driver
 
     def finalize(self, result):
-        if self._track_stats:
+        if self._track_stats and self.times:
             print '-' * 80
             if self._track_stats == 'runtime':
                 order = 1
@@ -149,8 +149,9 @@ class SeleniumPlugin(Plugin):
     def afterTest(self, test):
         if not hasattr(self, 'times'):
             self.times = []
-        self.times.append((test.address()[2], int(time.time() - self.start_time), self._driver.roundtrip_counter))
-        self._driver.roundtrip_counter = 0
+        if self.times and self._driver:
+            self.times.append((test.address()[2], int(time.time() - self.start_time), self._driver.roundtrip_counter))
+            self._driver.roundtrip_counter = 0
         driver = getattr(test.test, 'driver', False)
         if not driver:
             return
