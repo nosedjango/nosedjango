@@ -37,6 +37,9 @@ class IPluginInterface(object):
     def __new__(cls, *arg, **kw):
         raise TypeError("IPluginInterface class is for documentation only")
 
+    def beforeConnectionSetup(self, settings):
+        pass
+
     def beforeTestSetup(self, settings, setup_test_environment, connection):
         pass
 

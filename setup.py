@@ -83,13 +83,14 @@ setup(
     include_package_data = True,
     entry_points = {
         'nose.plugins': [
-            'django = nosedjango.nosedjango:NoseDjango',
-            'cherrypyliveserver = nosedjango.plugins.cherrypy_plugin:CherryPyLiveServerPlugin',
-            'djangofilestorage = nosedjango.plugins.file_storage_plugin:FileStoragePlugin',
-            'selenium = nosedjango.plugins.selenium_plugin:SeleniumPlugin',
-            'djangosphinxsearch = nosedjango.plugins.sphinxsearch_plugin:SphinxSearchPlugin',
-            'sshtunnel = nosedjango.plugins.ssh_tunnel_plugin:SshTunnelPlugin',
             'celery = nosedjango.plugins.celery_plugin:CeleryPlugin',
+            'cherrypyliveserver = nosedjango.plugins.cherrypy_plugin:CherryPyLiveServerPlugin',
+            'django = nosedjango.nosedjango:NoseDjango',
+            'djangofilestorage = nosedjango.plugins.file_storage_plugin:FileStoragePlugin',
+            'djangosphinxsearch = nosedjango.plugins.sphinxsearch_plugin:SphinxSearchPlugin',
+            'djangosqlite = nosedjango.plugins.sqlite_plugin:SqlitePlugin',
+            'selenium = nosedjango.plugins.selenium_plugin:SeleniumPlugin',
+            'sshtunnel = nosedjango.plugins.ssh_tunnel_plugin:SshTunnelPlugin',
             ]
         }
     )
