@@ -11,7 +11,7 @@ class SqlitePlugin(Plugin):
     name = 'django-sqlite'
 
     def beforeConnectionSetup(self, settings):
-        settings.DATABASE_ENGINE = 'sqlite3'
+        settings.DATABASE_ENGINE = 'django.db.backends.sqlite3'
         settings.DATABASE_NAME = '' # in-memory database
         settings.DATABASE_OPTIONS = {}
         settings.DATABASE_USER = ''

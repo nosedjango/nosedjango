@@ -7,7 +7,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'mysql'
+DATABASE_ENGINE = 'django.db.backends.mysql'
 DATABASE_NAME = 'nosedjango'
 DATABASE_USER = 'root'
 DATABASE_PASSWORD = ''

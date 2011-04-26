@@ -58,7 +58,7 @@ class SphinxSearchPlugin(Plugin):
     def startTest(self, test):
         from django.conf import settings
         from django.db import connection
-        if 'mysql' in connection.settings_dict['ENGINE']:
+        if 'django.db.backends.mysql' in connection.settings_dict['ENGINE']:
             # Using startTest instead of beforeTest so that we can be sure that
             # the fixtures were already loaded with nosedjango's beforeTest
             build_sphinx_index = getattr(test, 'build_sphinx_index', False)
@@ -99,7 +99,7 @@ class SphinxSearchPlugin(Plugin):
 
     def afterTest(self, test):
         from django.db import connection
-        if 'mysql' in connection.settings_dict['ENGINE']:
+        if 'django.db.backends.mysql' in connection.settings_dict['ENGINE']:
             if getattr(test.context, 'run_sphinx_searchd', False):
                 self._stop_searchd()
 
