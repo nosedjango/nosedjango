@@ -160,7 +160,7 @@ class NoseDjango(Plugin):
         from django.core import management
         from django.test.utils import setup_test_environment
 
-        self.old_db = settings.DATABASE_NAME
+        self.old_db = settings.DATABASES['default']['NAME']
         from django.db import connection
 
         self.call_plugins_method(
