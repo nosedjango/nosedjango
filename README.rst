@@ -1,25 +1,62 @@
 Nose django helper plugin
 =========================
 
-With this plugin you can write standard Nose unit tests inside a
-Django application.
+Nosedjango brings the goodness of Nose and its plugin ecosystem to the world of
+Django testing. Nose already has plugins for multiprocessing, coverage, tagging,
+profiling, skipping, xunit plugin and most everything else you could need. 
+Nosedjango means you don't have to re-invent those wheels.
+
+Perhaps the most compelling case for using nosedjango is the performance gains 
+seen when using the multiprocess module. (both runs on a core i7 laptop with a 
+fixture-intensive test suite) 
+
+Normal Django testrunner using sqlite ::
+
+    $ ./manage.py test account
+    ...
+    Ran 65 tests in 507.930s
+
+    OK
+
+NoseDjango with 8 processes ::
+
+    $ nosetests --with-doctest --with-django --django-settings pstat.settings --with-django-testfs --with-django-sqlite --processes 8 pstat.account
+    ...
+    Ran 65 tests in 35.731s
+
+Nose is ~14x faster.
+    
+Easy Extensibility
+------------------
+
+In addition, Nosedjango provides its own plugin system to hook in to the low
+level django-specific testing operations. Included with Nosedjango are plugins
+to do things like:
+
+* Create an isolated file storage location for testing.
+* Use an in-memory sqlite database.
+* Start a cherrpy server for integration-style tests.
+* Make it easier to test Celery.
+* Create and use a Sphinx search index for fulltext search tests.
+* Open an SSH tunnel for things like Selenium that might need outside 
+  resources.
+* Run Selenium2 functional tests in a headless virtual frame buffer.
+* Selectively switch out settings from the command line for different kinds
+  of tests.
 
 The plugin takes care of finding your applications settings.py file
 and creating/tearing down test database. It also has support for
 fixtures and it has experimental mechanism that wraps the tests in
 transactions to speed up testing.
 
-This plugin works with Django versions 1.0 or newer.
+This plugin works with Django versions 1.0 through django 1.3.
 
-Usage
------
+Basic Usage
+-----------
 
 Unit tests can be run with following command::
 
   nosetests --with-django [nose-options]
-
-Custom settings be used by setting ``DJANGO_SETTINGS_MODULE``
-environmental variable.
 
 Command line options
 ~~~~~~~~~~~~~~~~~~~~
@@ -31,114 +68,145 @@ following options:
                             The specified `MODULE` needs to be found
                             in ``sys.path``.
 
-Building Debian package
------------------------
 
-Plugin can also be installed as a Debian package::
+Parallel Test Running Via Multiprocess
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  dpkg-checkbuilddeps
-  dpkg-buildpackage -us -uc -rfakeroot
-  sudo debi
+An easy win for Nosedjango out of the box is the ability to safely distribute
+tests across multiple processes, dramatically speeding up test runs on
+multicore machines. 
 
-Testing
--------
+In the simplest case, the following will run your tests distributed across two
+cores using in-memory sqlite databases and separate file storage locations
+to minimize file collision conflicts::
 
-The `project` sample Django project was created using Django 1.0b1.
+    nosetests --with-django --with-django-sqlite --with-django-testfs --processes=2 <your_project_module>
 
-Using a more recent version of Django may cause problems.  You've been
-warned.
+.. Note:: 
+    For very small test suites or test suites that don't use fixtures, the 
+    overhead from starting multiple processes can result in the full test
+    run actually being *slower* with multiple processes than with a single
+    process.
 
-If you change directory into the 'project' directory, you should be
-able  to run the nose test runner and get reasonable results.
+    Complex test suites might require some adaptation to support parallel test
+    running. If tests rely on things like hardcoded file paths or shared
+    external resources, these will need to be made generic. Usually this is as
+    easy as using a a NamedTemporaryFile instead of a hardcoded path.
 
-Note that you *won't* be running your doctests unless you tell nose to
-do so.
 
-As usual, you need to tell nose to run doctest test strings in modules
-that contain standard test classes.
+Installation
+------------
 
-A successful run should hit *14* test cases excercising :
+Installation via Pip is straightforward::
 
-    * race conditions between test cases that create objects in test
-      methods
-    * race conditions between test cases that create objects in 
-      fixture loading
-    * doctests
-    * test functions
-    * mixes of doctests and test modules
-    * docstrings in models
+    $ pip install -e git+git://github.com/winhamwr/nosedjango.git#egg=nosedjango
 
-Transaction support
-~~~~~~~~~~~~~~~~~~~
 
-As default, nosedjango plugin runs the tests within a transaction.
-This behaviour can be altered in two ways:
+Running the Nosedjango Test Suite
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Having ``DISABLE_TRANSACTION_MANAGEMENT`` in settings.py makes
-  nosedjango not to use transactions
+An easy way to try out your nosedjango installation is to try the test suite
+yourself::
 
-* Having ``use_transaction = False`` in test's context prevents using
-  transaction for the test. Note: this can not override
-  ``DISABLE_TRANSACTION_MANAGEMENT``. Example::
+    $ python setup.py nosetests
 
-    class SomeTests(object):
 
-        use_transaction = False
+Deviations From the Django Testrunner
+-------------------------------------
 
-        def test_simple(self):
-            pass
+Nosedjango makes a few decisions differently than Django's normal testrunner
+and depending on your project, you might need to make adjustments for all of
+your tests to run properly.
 
-  Note, that this implies to *all* tests in the same context (ie.
-  class).
 
-Using fixtures
+Doctests Skipped by Default
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, Nose only runs doctests if the ``--with-doctest`` option is
+included. Nosedjango respects this default rather than the Django default, so
+if you'd like to run your doctests, add ``--with-doctest`` to your options.
+
+Test Discovery
 ~~~~~~~~~~~~~~
 
-Nosedjango supports loading fixtures from test's context. Fixtures are
-generated the same way as they are in the traditional Django test
-system: using ``manage.py dumpdata``. Example::
+Nosedjango relies on Nose's test discovery method, which means that Nose might
+find some tests that weren't being run by Django. 
 
-  fixtures = ['cheese.json', 'cakes']
+Database Schema Isn't Re-created Every Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  def test_cheesecake():
-     # do something...
+For performance reasons, the database schema is only created once. If you have
+tests that alter the schema (migration tests for example), you'll need to add
+a ``rebuild_schema`` attribute to those tests.
 
-Note, that this implies to *all* tests in the same context (ie.
-module or class)
+For example::
 
+    class LargerUsernameTestCase(TestCase):
+        rebuild_schema = True
 
-Sample test run
+        def setUp(self):
+            if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+                from django.db import connection # pylint: disable=W0404
+                cursor = connection.cursor()
+                cursor.execute("ALTER TABLE `auth_user` CHANGE COLUMN `username` "
+                               "`username` VARCHAR(130) "
+                               "COLLATE utf8_unicode_ci NOT NULL")
+                                
+
+        def test_long_username(self):
+            # test some stuff
+
+Fixture Loading
 ~~~~~~~~~~~~~~~
-::
 
-  $ nosetests -v --with-django --with-doctest --doctest-tests --doctest-tests
+Nose supports module-level fixtures, and so does Nosedjango. This means that if
+you have a ``fixtures`` variable floating around in a test module, Nosedjango
+will load it.
 
-  Doctest: project.zoo.models.Zoo ... ok
-  Doctest: project.zoo.models.Zoo.__str__ ... ok
-  Doctest: project.zoo.models.func ... ok
-  This is just a stub for a regular test method ... ok
-  Doctest: project.zoo.test_doctest_modules.test_docstring ... ok
-  Doctest: project.zoo.test_doctest_modules.test_docstring ... ok
-  project.zoo.test_fixtures.TestFixture1.test_count ... ok
-  project.zoo.test_fixtures.TestFixture2.test_count ... ok
-  project.zoo.test_race.TestDBRace1.test1 ... ok
-  project.zoo.test_race.TestDBRace2.test1 ... ok
-  We're customizing the ROOT_URLCONF with zoo.urls, ... ok
-  We're using the standard ROOT_URLCONF, so we need to ... ok
-  testcase1 (project.zoo.tests.TestDjango) ... ok
-  testcase2 (project.zoo.tests.TestDjango) ... ok
+For example:: 
 
-  ----------------------------------------------------------------------
-  Ran 14 tests in 1.219s
+    fixtures = ['cheese.json', 'cakes']
 
-  OK
-  Destroying test database...
+    def test_cheesecake():
+        # do something...
 
+Cache is Cleared Between Tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The cache is cleared between each test run, as is the case with newer versions
+of Django. If you have tests that depend on other tests modifying the cache
+(*tsk tsk tsk*), then you will need to modify those tests for them to work
+under Nosedjango.
+
+
+Plugin System
+-------------
+
+Nosedjango's plugin system is heavily inspired by Nose's own system and provides
+loads of hooks in to the Django test-running process. Nosedjango plugins are
+actually just Nose plugins themselves that have access to extra hooks. To see
+available hooks, check out ``nosedjango.plugins.base_plugin.Plugin``. Plugins
+should extend that class.
+
+Better documentation is hopefully forthcoming, but reading the source for the
+included ``file_storage_plugin`` and ``sqlite_plugin`` should provide clues
+along with Nose's documentation on writing plugins. One example of solving
+very project-specific testing needs is the NoseDjango plugin located at
+https://github.com/jlward/nosedjango-pstat
+
+Known Issues
+------------
+
+* Multiprocess testing only currently works with in-memory sqlite. This is very
+  fixable though and pull requests are welcome.
+* Nosedjango is broken with Nose 1.0 and higher due to changes in Nose's
+  Multiprocessing module. This is currently being investigated.
 
 Authors
 -------
 
-This version is maintained by Jyrki Pulliainen
+This version is maintained by Wes Winham <winhamwr@gmail.com> as an extension
+of the base nosedjango project maintained by Jyrki Pulliainen
 <jyrki.pulliainen@inoi.fi>.
 
 Original plugin courtesy of Victor Ng <crankycoder@gmail.com> who

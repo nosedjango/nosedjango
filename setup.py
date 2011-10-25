@@ -28,7 +28,7 @@ class RunTests(Command):
             '--with-doctest',
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
-            '--django-sqlite',
+            '--with-django-sqlite',
             'nosedjangotests.polls',
         ]
         TestProgram(argv=args, exit=False)
@@ -40,7 +40,7 @@ class RunTests(Command):
             '--processes', '3',
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
-            '--django-sqlite',
+            '--with-django-sqlite',
             'nosedjangotests.polls',
         ]
         TestProgram(argv=args, exit=False)
