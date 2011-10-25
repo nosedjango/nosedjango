@@ -24,3 +24,4 @@ debian/python-nosedjango
 
 # Generated docs
 README.html
+.noseids
