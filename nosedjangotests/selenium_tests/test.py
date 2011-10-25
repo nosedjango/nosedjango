@@ -4,5 +4,5 @@ class SeleniumTestCase(TransactionTestCase):
 
     def test_simple(self):
         driver = self.driver
-        driver.get('http://localhost:8000')
-        self.assertEqual(driver.title, 'Welcome to Django')
+        driver.get('http://www.google.com')
+        self.assertEqual(driver.title, 'Google')
