@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages, Command
-import os, subprocess, sys
+import os, sys
 
 class RunTests(Command):
     description = "Run the test suite from the tests dir."
@@ -18,6 +18,7 @@ class RunTests(Command):
         try:
             from nose.core import TestProgram
             import nosedjango
+            print nosedjango.__version__
         except ImportError:
             print 'nose and nosedjango are required to run this test suite'
             sys.exit(1)
@@ -53,6 +54,19 @@ class RunTests(Command):
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
             'nosedjangotests.polls',
+        ]
+        TestProgram(argv=args, exit=False)
+
+        print "Running tests selenium. (will fail if mysql not configured)"
+        args = [
+            '-v',
+            '--with-id',
+            '--with-doctest',
+            '--with-django',
+            '--with-cherrypyliveserver',
+            '--with-selenium',
+            '--django-settings', 'nosedjangotests.settings',
+            'nosedjangotests.selenium_tests',
         ]
         TestProgram(argv=args, exit=False)
 
