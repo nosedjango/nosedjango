@@ -63,7 +63,6 @@ class RunTests(Command):
             '--with-id',
             '--with-doctest',
             '--with-django',
-            '--with-cherrypyliveserver',
             '--with-selenium',
             '--django-settings', 'nosedjangotests.settings',
             'nosedjangotests.selenium_tests',

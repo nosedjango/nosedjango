@@ -6,11 +6,8 @@ are run, and tears the test database (or schema) down after all tests are run.
 
 from __future__ import with_statement
 
-import math
 import os
-import random
 import re
-import string
 import sys
 
 import nose.case
