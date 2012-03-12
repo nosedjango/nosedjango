@@ -157,7 +157,7 @@ class NoseDjango(Plugin):
         from django.core import management
         from django.test.utils import setup_test_environment
 
-        self.old_db = settings.DATABASES['default']['NAME']
+        self.old_db = hasattr(settings, 'DATABASES') and settings.DATABASES['default']['NAME'] or settings.DATABASE_NAME
         from django.db import connection
 
         self.call_plugins_method(
@@ -202,11 +202,14 @@ class NoseDjango(Plugin):
         Should we let Django's custom testcase classes handle the setup/teardown
         operations for transaction rollback, fixture loading and urlconf loading.
         """
-        from django.test import TransactionTestCase
+        try:
+            from django.test import TransactionTestCase as DjangoTestCase    # Django >= 1.1
+        except ImportError:
+            from django.test import TestCase as DjangoTestCase    # Django <= 1.0
 
         # If we're a subclass of TransactionTestCase, then the testcase will
         # handle any transaction setup, fixtures, or urlconfs
-        if isinstance(test.test, TransactionTestCase):
+        if isinstance(test.test, DjangoTestCase):
             return True
         return False
 
