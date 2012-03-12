@@ -36,7 +36,7 @@ class AltersBleed1TestCase(TestCase):
     rebuild_schema = True
 
     def test_db_alteration(self):
-        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+        if hasattr(settings, 'DATABASES') and settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql' or settings.DATABASE_NAME == 'mysql':
             from django.db import connection
             cursor = connection.cursor()
             cursor.execute('ALTER TABLE `polls_poll` CHANGE COLUMN `question` `question` varchar(201) COLLATE utf8_unicode_ci NOT NULL')
