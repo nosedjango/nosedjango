@@ -1,5 +1,8 @@
+import codecs
+import os
+import sys
+
 from setuptools import setup, find_packages, Command
-import os, sys
 
 class RunTests(Command):
     description = "Run the test suite from the tests dir."
@@ -77,22 +80,23 @@ class RunTests(Command):
     def finalize_options(self):
         pass
 
+import nosedjango
+
+long_description = codecs.open("README.rst", "r", "utf-8").read()
 
 setup(
-    name='NoseDjango',
-    version='0.7.2',
-    author='Jyrki Pulliainen',
-    author_email = 'jyrki.pulliainen@inoi.fi',
-    description = 'nose plugin for easy testing of django projects ' \
-        'and apps. Sets up a test database (or schema) and installs apps ' \
-        'from test settings file before tests are run, and tears the test ' \
-        'database (or schema) down after all tests are run.',
-    install_requires='nose>=0.11',
-    url = "http://www.assembla.com/spaces/nosedjango",
+    name='nosedjango',
+    version=nosedjango.__version__,
+    description=nosedjango.__doc__,
+    author=nosedjango.__author__,
+    author_email=nosedjango.__contact__,
+    long_description=long_description,
+    install_requires='nose>=0.11,nose<1.0',
+    url = "http://github.com/nosedjango/nosedjango",
     license = 'GNU LGPL',
     packages = find_packages(exclude=['nosedjangotests', 'nosedjangotests.*']),
     zip_safe = False,
-    cmdclass = {'nosetests': RunTests},
+    cmdclass = {'test': RunTests},
     include_package_data = True,
     entry_points = {
         'nose.plugins': [
@@ -104,7 +108,6 @@ setup(
             'djangosqlite = nosedjango.plugins.sqlite_plugin:SqlitePlugin',
             'selenium = nosedjango.plugins.selenium_plugin:SeleniumPlugin',
             'sshtunnel = nosedjango.plugins.ssh_tunnel_plugin:SshTunnelPlugin',
-            ]
-        }
-    )
-
+        ],
+    },
+)

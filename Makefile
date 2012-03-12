@@ -1,5 +1,5 @@
 pypi:
-	python setup.py sdist bdist_egg upload -s 
+	python setup.py sdist upload -s 
 
 clean:
 	rm -rf dist build *egg-info

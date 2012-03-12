@@ -49,7 +49,7 @@ and creating/tearing down test database. It also has support for
 fixtures and it has experimental mechanism that wraps the tests in
 transactions to speed up testing.
 
-This plugin works with Django versions 1.0 through django 1.3.
+This plugin works with Django versions 1.2 and 1.3.
 
 Basic Usage
 -----------
@@ -62,12 +62,19 @@ Command line options
 ~~~~~~~~~~~~~~~~~~~~
 
 In addition to default nose command line options, nosedjango offers
-following options:
+the following options:
 
 --django-settings=MODULE    Specify a custom Django settings `MODULE`.
                             The specified `MODULE` needs to be found
                             in ``sys.path``.
 
+--django-sqlite             If set, use in-memory sqlite database for
+                            tests.
+
+--django-interactive        Run tests in interactive mode (see
+                            `DjangoTestSuiteRunner documentation
+                            <http://docs.djangoproject.com/en/dev/topics/testing/#django.test.simple.DjangoTestSuiteRunner>`_).
+                            Default: false.
 
 Parallel Test Running Via Multiprocess
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -85,13 +92,13 @@ to minimize file collision conflicts::
 .. Note:: 
     For very small test suites or test suites that don't use fixtures, the 
     overhead from starting multiple processes can result in the full test
-    run actually being *slower* with multiple processes than with a single
+    run actually being *slower* with multiple processes compared to a single
     process.
 
     Complex test suites might require some adaptation to support parallel test
     running. If tests rely on things like hardcoded file paths or shared
     external resources, these will need to be made generic. Usually this is as
-    easy as using a a NamedTemporaryFile instead of a hardcoded path.
+    easy as using a NamedTemporaryFile instead of a hardcoded path.
 
 
 Installation
@@ -99,7 +106,7 @@ Installation
 
 Installation via Pip is straightforward::
 
-    $ pip install -e git+git://github.com/winhamwr/nosedjango.git#egg=nosedjango
+    $ pip install -e git+git://github.com/nosedjango/nosedjango.git#egg=nosedjango
 
 
 Running the Nosedjango Test Suite
@@ -205,16 +212,30 @@ Known Issues
 Authors
 -------
 
-This version is maintained by Wes Winham <winhamwr@gmail.com> as an extension
-of the base nosedjango project maintained by Jyrki Pulliainen
+NoseDjango is currently maintained by Wes Winham <winhamwr@gmail.com>. 
+It was previously maintained by Jyrki Pulliainen
 <jyrki.pulliainen@inoi.fi>.
 
 Original plugin courtesy of Victor Ng <crankycoder@gmail.com> who
 rewrote Jason Pellerin's original nose-django plugin.
 
+For all contributors, see *AUTHORS* file.
+
+Contributing
+------------
+
+This project and it's issues are currently hosted in github_. If you
+find a bug or have a feature request, use `github's issue tracker`_
+for that.
+
+.. _github: http://github.com/nosedjango/nosedjango/
+.. _github's issue tracker: http://github.com/nosedjango/nosedjango/issues
+
+Patches are welcome :)
+
 License
 -------
 
 This software is licensed with GNU LESSER GENERAL PUBLIC LICENSE
-version 3 or (at your option) any later version. See `COPYING` for
+version 3 or (at your option) any later version. See *COPYING* for
 more details.
