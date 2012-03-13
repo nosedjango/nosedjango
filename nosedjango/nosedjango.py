@@ -435,7 +435,7 @@ class NoseDjango(Plugin):
             def _urlconf_teardown(self):
                 pass
 
-        class TestCase(django.test.TestCase):
+        class TestCase(TransactionTestCase):
             use_transaction_isolation = True
 
 
