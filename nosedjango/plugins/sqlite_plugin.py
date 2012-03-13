@@ -1,6 +1,3 @@
-import os
-from nose.config import ConfigError
-
 from nosedjango.plugins.base_plugin import Plugin
 
 class SqlitePlugin(Plugin):
@@ -20,6 +17,6 @@ class SqlitePlugin(Plugin):
         else:
             settings.DATABASE_ENGINE = 'sqlite3'
             settings.DATABASE_NAME = ''
-            settings.DATABASE_OPTIONS = {} 
+            settings.DATABASE_OPTIONS = {}
             settings.DATABASE_USER = ''
             settings.DATABASE_PASSWORD = ''

@@ -85,10 +85,18 @@ class NoseDjango(Plugin):
         transaction.leave_transaction_management = self.orig_leave
 
     def options(self, parser, env):
-        parser.add_option('--django-settings',
-                          help='Use custom Django settings module.',
-                          metavar='SETTINGS',
-                          )
+        parser.add_option(
+            '--django-settings',
+            help='Use custom Django settings module.',
+            metavar='SETTINGS',
+        )
+        parser.add_option(
+            '--slow-fixtures',
+            help="Don't optimize fixture loading with transactions",
+            action="store_true",
+            default=False,
+            metavar='SETTINGS',
+        )
         super(NoseDjango, self).options(parser, env)
 
     def configure(self, options, conf):
@@ -202,15 +210,17 @@ class NoseDjango(Plugin):
         Should we let Django's custom testcase classes handle the setup/teardown
         operations for transaction rollback, fixture loading and urlconf loading.
         """
-        try:
-            from django.test import TransactionTestCase as DjangoTestCase    # Django >= 1.1
-        except ImportError:
-            from django.test import TestCase as DjangoTestCase    # Django <= 1.0
-
         # If we're a subclass of TransactionTestCase, then the testcase will
         # handle any transaction setup, fixtures, or urlconfs
-        if isinstance(test.test, DjangoTestCase):
-            return True
+        try:
+            from django.test import TransactionTestCase # Django >= 1.1
+            if isinstance(test.test, TransactionTestCase):
+                return True
+        except ImportError:
+            from django.test import TestCase # Django <= 1.0
+            if isinstance(test.test, TestCase):
+                return True
+
         return False
 
     def _should_rebuild_schema(self, test):

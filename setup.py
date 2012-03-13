@@ -32,12 +32,37 @@ class RunTests(Command):
             '--with-doctest',
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
+            '--slow-fixtures',
             '--with-django-sqlite',
             'nosedjangotests.polls',
         ]
         TestProgram(argv=args, exit=False)
 
         print "Running tests multiprocess"
+        args = [
+            '-v',
+            '--with-doctest',
+            '--processes', '3',
+            '--with-django',
+            '--django-settings', 'nosedjangotests.settings',
+            '--slow-fixtures',
+            '--with-django-sqlite',
+            'nosedjangotests.polls',
+        ]
+        TestProgram(argv=args, exit=False)
+
+        print "Running tests with class-based fixture grouping on sqlite"
+        args = [
+            '-v',
+            '--with-doctest',
+            '--with-django',
+            '--django-settings', 'nosedjangotests.settings',
+            '--with-django-sqlite',
+            'nosedjangotests.polls',
+        ]
+        TestProgram(argv=args, exit=False)
+
+        print "Running tests with class-based fixture grouping multiprocess style"
         args = [
             '-v',
             '--with-doctest',
@@ -56,21 +81,44 @@ class RunTests(Command):
             '--with-doctest',
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
+            '--slow-fixtures',
             'nosedjangotests.polls',
         ]
         TestProgram(argv=args, exit=False)
 
-        print "Running tests selenium. (will fail if mysql not configured)"
+        print "Running tests with class-based fixture grouping on mysql."
+        print "This will fail if mysql isn't configured"
         args = [
             '-v',
             '--with-id',
             '--with-doctest',
             '--with-django',
-            '--with-selenium',
             '--django-settings', 'nosedjangotests.settings',
-            'nosedjangotests.selenium_tests',
+            '--slow-fixtures',
+            'nosedjangotests.polls',
         ]
         TestProgram(argv=args, exit=False)
+
+        selenium_installed = False
+        try:
+            import selenium
+            selenium_installed = selenium.__version__
+        except ImportError:
+            print "Selenium not installed. Skipping tests."
+            # No Selenium
+        if selenium_installed:
+            print "Running tests using selenium. (will fail if mysql not configured)"
+            print "This will fail if mysql isn't configured"
+            args = [
+                '-v',
+                '--with-id',
+                '--with-doctest',
+                '--with-django',
+                '--with-selenium',
+                '--django-settings', 'nosedjangotests.settings',
+                'nosedjangotests.selenium_tests',
+            ]
+            TestProgram(argv=args, exit=False)
 
         os.chdir(setup_dir)
 
