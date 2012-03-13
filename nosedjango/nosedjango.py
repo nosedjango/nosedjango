@@ -110,39 +110,6 @@ class NoseDjango(Plugin):
         else:
             self.settings_module = 'settings'
 
-        # Monkeypatching. Like a boss.
-        # We're taking over all of the fixture management and such from the
-        # django test classes. Dealing with switching back and forth between
-        # them is a huge pita, and this just kind of works.
-        import django.test
-        class TransactionTestCase(django.test.TransactionTestCase):
-            use_transaction_isolation = False
-
-            def _pre_setup(self):
-                pass
-
-            def _fixture_setup(self):
-                pass
-
-            def _urlconf_setup(self):
-                pass
-
-            def _post_teardown(self):
-                pass
-
-            def _fixture_teardown(self):
-                pass
-
-            def _urlconf_teardown(self):
-                pass
-
-        class TestCase(django.test.TestCase):
-            use_transaction_isolation = True
-
-
-        django.test.TransactionTestCase = TransactionTestCase
-        django.test.TestCase = TestCase
-
         super(NoseDjango, self).configure(options, conf)
 
         self.nose_config = conf
@@ -188,6 +155,7 @@ class NoseDjango(Plugin):
             sys.path.append(self.settings_path)
 
         from django.conf import settings
+        self._monkeypatch_test_classes()
 
         # Some Django code paths evaluate differently
         # between DEBUG and not DEBUG.  Example of this include the url
@@ -440,3 +408,38 @@ class NoseDjango(Plugin):
         if hasattr(self, 'old_urlconf'):
             settings.ROOT_URLCONF = self.old_urlconf
             clear_url_caches()
+
+    def _monkeypatch_test_classes(self):
+        # Monkeypatching. Like a boss.
+        # We're taking over all of the fixture management and such from the
+        # django test classes. Dealing with switching back and forth between
+        # them is a huge pita, and this just kind of works.
+        import django.test
+        class TransactionTestCase(django.test.TransactionTestCase):
+            use_transaction_isolation = False
+
+            def _pre_setup(self):
+                pass
+
+            def _fixture_setup(self):
+                pass
+
+            def _urlconf_setup(self):
+                pass
+
+            def _post_teardown(self):
+                pass
+
+            def _fixture_teardown(self):
+                pass
+
+            def _urlconf_teardown(self):
+                pass
+
+        class TestCase(django.test.TestCase):
+            use_transaction_isolation = True
+
+
+        django.test.TransactionTestCase = TransactionTestCase
+        django.test.TestCase = TestCase
+
