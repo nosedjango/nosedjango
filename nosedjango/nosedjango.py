@@ -110,6 +110,39 @@ class NoseDjango(Plugin):
         else:
             self.settings_module = 'settings'
 
+        # Monkeypatching. Like a boss.
+        # We're taking over all of the fixture management and such from the
+        # django test classes. Dealing with switching back and forth between
+        # them is a huge pita, and this just kind of works.
+        import django.test
+        class TransactionTestCase(django.test.TransactionTestCase):
+            use_transaction_isolation = False
+
+            def _pre_setup(self):
+                pass
+
+            def _fixture_setup(self):
+                pass
+
+            def _urlconf_setup(self):
+                pass
+
+            def _post_teardown(self):
+                pass
+
+            def _fixture_teardown(self):
+                pass
+
+            def _urlconf_teardown(self):
+                pass
+
+        class TestCase(django.test.TestCase):
+            use_transaction_isolation = True
+
+
+        django.test.TransactionTestCase = TransactionTestCase
+        django.test.TestCase = TestCase
+
         super(NoseDjango, self).configure(options, conf)
 
         self.nose_config = conf
@@ -207,24 +240,6 @@ class NoseDjango(Plugin):
 
         return True
 
-    def _should_use_django_testcase_management(self, test):
-        """
-        Should we let Django's custom testcase classes handle the setup/teardown
-        operations for transaction rollback, fixture loading and urlconf loading.
-        """
-        # If we're a subclass of TransactionTestCase, then the testcase will
-        # handle any transaction setup, fixtures, or urlconfs
-        try:
-            from django.test import TransactionTestCase # Django >= 1.1
-            if isinstance(test.test, TransactionTestCase):
-                return True
-        except ImportError:
-            from django.test import TestCase # Django <= 1.0
-            if isinstance(test.test, TestCase):
-                return True
-
-        return False
-
     def _should_rebuild_schema(self, test):
         if getattr(test.context, 'rebuild_schema', False):
             return True
@@ -238,7 +253,6 @@ class NoseDjango(Plugin):
         from django.conf import settings
         from django.contrib.contenttypes.models import ContentType
         from django.db import connection, transaction
-        from django.core.management import call_command
         from django.test.utils import setup_test_environment, teardown_test_environment
         from django import VERSION as DJANGO_VERSION
 
@@ -254,10 +268,8 @@ class NoseDjango(Plugin):
 
         use_transaction_isolation = self._should_use_transaction_isolation(
             test, settings)
-        using_django_testcase_management = self._should_use_django_testcase_management(test)
 
-        if use_transaction_isolation \
-           and not using_django_testcase_management:
+        if use_transaction_isolation:
             self.restore_transaction_support(transaction)
             transaction.rollback()
             if transaction.is_managed():
@@ -265,14 +277,13 @@ class NoseDjango(Plugin):
             # If connection is not closed Postgres can go wild with
             # character encodings.
             connection.close()
-        elif not use_transaction_isolation:
+        else:
             # Have to clear the db even if we're using django because django
             # doesn't properly flush the database after a test. It relies on
             # flushing before a test, so we want to avoid the case where a django
             # test doesn't flush and then a normal test runs, because it will
             # expect the db to already be flushed
-            ContentType.objects.clear_cache() # Otherwise django.contrib.auth.Permissions will depend on deleted ContentTypes
-            call_command('flush', verbosity=0, interactive=False)
+            self._flush_db()
             self._loaded_test_fixtures = []
 
             # In Django <1.2 Depending on the order of certain post-syncdb
@@ -282,7 +293,6 @@ class NoseDjango(Plugin):
             # See: http://code.djangoproject.com/ticket/7052
             if DJANGO_VERSION[0] <= 1 and DJANGO_VERSION[1] < 2 \
                and 'django.contrib.contenttypes' in settings.INSTALLED_APPS:
-                from django.contrib.contenttypes.models import ContentType
                 from django.contrib.contenttypes.management import update_all_contenttypes
                 from django.db import models
                 from django.contrib.auth.management import create_permissions
@@ -320,6 +330,13 @@ class NoseDjango(Plugin):
 
         self.call_plugins_method('afterRollback', settings)
 
+    def _flush_db(self):
+        from django.contrib.contenttypes.models import ContentType
+        from django.core.management import call_command
+        ContentType.objects.clear_cache() # Otherwise django.contrib.auth.Permissions will depend on deleted ContentTypes
+        call_command('flush', verbosity=0, interactive=False)
+
+
     def beforeTest(self, test):
         """
         Load any database fixtures, set up any test url configurations and
@@ -338,9 +355,8 @@ class NoseDjango(Plugin):
 
         use_transaction_isolation = self._should_use_transaction_isolation(
             test, settings)
-        using_django_testcase_management = self._should_use_django_testcase_management(test)
 
-        if use_transaction_isolation and not using_django_testcase_management:
+        if use_transaction_isolation:
             self.call_plugins_method('beforeTransactionManagement', settings, test)
             transaction.enter_transaction_management()
             transaction.managed(True)
@@ -349,12 +365,11 @@ class NoseDjango(Plugin):
         Site.objects.clear_cache()
         ContentType.objects.clear_cache() # Otherwise django.contrib.auth.Permissions will depend on deleted ContentTypes
 
-        if use_transaction_isolation and not using_django_testcase_management:
+        if use_transaction_isolation:
             self.call_plugins_method('afterTransactionManagement', settings, test)
 
         self.call_plugins_method('beforeFixtureLoad', settings, test)
-        if isinstance(test, nose.case.Test) \
-           and not using_django_testcase_management:
+        if isinstance(test, nose.case.Test):
             # Mirrors django.test.testcases:TestCase
 
             if hasattr(test.context, 'fixtures'):
@@ -362,7 +377,16 @@ class NoseDjango(Plugin):
                 # that we're using *args and **kwargs together.
                 ordered_fixtures = sorted(test.context.fixtures)
                 if ordered_fixtures != self._loaded_test_fixtures:
-                    # Only load the fixtures if they're not already loaded
+                    # Only clear + load the fixtures if they're not already loaded
+
+                    # Flush previous fixtures
+                    self._flush_db()
+                    if use_transaction_isolation:
+                        self.restore_transaction_support(transaction)
+                        transaction.commit()
+                        self.disable_transaction_support(transaction)
+
+                    # Load the new fixtures
                     if use_transaction_isolation:
                         call_command(
                             'loaddata',
@@ -383,8 +407,7 @@ class NoseDjango(Plugin):
 
         self.call_plugins_method('beforeUrlConfLoad', settings, test)
         if isinstance(test, nose.case.Test) and \
-           not using_django_testcase_management \
-           and hasattr(test.context, 'urls'):
+           hasattr(test.context, 'urls'):
             # We have to use this slightly awkward syntax due to the fact
             # that we're using *args and **kwargs together.
             self.old_urlconf = settings.ROOT_URLCONF
