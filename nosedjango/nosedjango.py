@@ -155,7 +155,6 @@ class NoseDjango(Plugin):
             sys.path.append(self.settings_path)
 
         from django.conf import settings
-        self._monkeypatch_test_classes()
 
         # Some Django code paths evaluate differently
         # between DEBUG and not DEBUG.  Example of this include the url
@@ -170,6 +169,8 @@ class NoseDjango(Plugin):
 
         self.old_db = hasattr(settings, 'DATABASES') and settings.DATABASES['default']['NAME'] or settings.DATABASE_NAME
         from django.db import connection
+
+        self._monkeypatch_test_classes()
 
         self.call_plugins_method(
             'beforeTestSetup', settings, setup_test_environment, connection)
