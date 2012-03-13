@@ -61,6 +61,8 @@ class NoseDjango(Plugin):
         self.nose_config = None
         self.django_plugins = []
 
+        self._loaded_test_fixtures = []
+
     def disable_transaction_support(self, transaction):
         self.orig_commit = transaction.commit
         self.orig_rollback = transaction.rollback
@@ -247,6 +249,7 @@ class NoseDjango(Plugin):
 
             setup_test_environment()
             connection.creation.create_test_db(verbosity=self.verbosity)
+            self._loaded_test_fixtures = []
             return
 
         use_transaction_isolation = self._should_use_transaction_isolation(
@@ -270,6 +273,7 @@ class NoseDjango(Plugin):
             # expect the db to already be flushed
             ContentType.objects.clear_cache() # Otherwise django.contrib.auth.Permissions will depend on deleted ContentTypes
             call_command('flush', verbosity=0, interactive=False)
+            self._loaded_test_fixtures = []
 
             # In Django <1.2 Depending on the order of certain post-syncdb
             # signals, ContentTypes can be removed accidentally. Manually delete and re-add all
@@ -356,10 +360,25 @@ class NoseDjango(Plugin):
             if hasattr(test.context, 'fixtures'):
                 # We have to use this slightly awkward syntax due to the fact
                 # that we're using *args and **kwargs together.
-                if use_transaction_isolation:
-                    call_command('loaddata', *test.context.fixtures, **{'verbosity': 0, 'commit': False})
-                else:
-                    call_command('loaddata', *test.context.fixtures, **{'verbosity': 0})
+                ordered_fixtures = sorted(test.context.fixtures)
+                if ordered_fixtures != self._loaded_test_fixtures:
+                    # Only load the fixtures if they're not already loaded
+                    if use_transaction_isolation:
+                        call_command(
+                            'loaddata',
+                            *test.context.fixtures,
+                            **{'verbosity': 0, 'commit': False}
+                        )
+                        self.restore_transaction_support(transaction)
+                        transaction.commit()
+                        self.disable_transaction_support(transaction)
+                    else:
+                        call_command(
+                            'loaddata',
+                            *test.context.fixtures,
+                            **{'verbosity': 0}
+                        )
+                    self._loaded_test_fixtures = ordered_fixtures
         self.call_plugins_method('afterFixtureLoad', settings, test)
 
         self.call_plugins_method('beforeUrlConfLoad', settings, test)
