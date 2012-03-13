@@ -139,7 +139,10 @@ setup(
     author=nosedjango.__author__,
     author_email=nosedjango.__contact__,
     long_description=long_description,
-    install_requires=['nose>=0.11', 'nose<1.0'],
+    install_requires=['nose>=0.11,<1.0', 'django>=1.0,<1.4'],
+    extras_require = {
+        'selenium': ['selenium>=2.0'],
+    },
     url = "http://github.com/nosedjango/nosedjango",
     license = 'GNU LGPL',
     packages = find_packages(exclude=['nosedjangotests', 'nosedjangotests.*']),
