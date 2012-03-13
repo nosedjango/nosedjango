@@ -62,6 +62,7 @@ class NoseDjango(Plugin):
         self.django_plugins = []
 
         self._loaded_test_fixtures = []
+        self._num_fixture_loads = 0
 
     def disable_transaction_support(self, transaction):
         self.orig_commit = transaction.commit
@@ -90,13 +91,6 @@ class NoseDjango(Plugin):
         parser.add_option(
             '--django-settings',
             help='Use custom Django settings module.',
-            metavar='SETTINGS',
-        )
-        parser.add_option(
-            '--slow-fixtures',
-            help="Don't optimize fixture loading with transactions",
-            action="store_true",
-            default=False,
             metavar='SETTINGS',
         )
         super(NoseDjango, self).options(parser, env)
@@ -178,6 +172,7 @@ class NoseDjango(Plugin):
         self.call_plugins_method('afterTestSetup', settings)
 
         management.get_commands()
+        # Ensure that nothing (eg. South) steals away our syncdb command
         management._commands['syncdb'] = 'django.core'
 
         self.call_plugins_method(
@@ -371,6 +366,7 @@ class NoseDjango(Plugin):
                             *test.context.fixtures,
                             **{'verbosity': 0}
                         )
+                    self._num_fixture_loads += 1
                     self._loaded_test_fixtures = ordered_fixtures
         self.call_plugins_method('afterFixtureLoad', settings, test)
 
@@ -406,6 +402,8 @@ class NoseDjango(Plugin):
         teardown_test_environment()
         self.call_plugins_method('afterTeardownTestEnv', settings)
 
+        if self.verbosity >= 2:
+            print "Loaded fixtures %s times" % self._num_fixture_loads
         if hasattr(self, 'old_urlconf'):
             settings.ROOT_URLCONF = self.old_urlconf
             clear_url_caches()

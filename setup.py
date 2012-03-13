@@ -26,45 +26,45 @@ class RunTests(Command):
             print 'nose and nosedjango are required to run this test suite'
             sys.exit(1)
 
+        test_results = []
+
         print "Running tests with sqlite"
         args = [
-            '-v',
+            '--verbosity=2',
             '--with-doctest',
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
-            '--slow-fixtures',
             '--with-django-sqlite',
             'nosedjangotests.polls',
         ]
-        TestProgram(argv=args, exit=False)
+        test_results.append(TestProgram(argv=args, exit=False))
 
         print "Running tests multiprocess"
         args = [
-            '-v',
+            '--verbosity=2',
             '--with-doctest',
             '--processes', '3',
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
-            '--slow-fixtures',
             '--with-django-sqlite',
             'nosedjangotests.polls',
         ]
-        TestProgram(argv=args, exit=False)
+        test_results.append(TestProgram(argv=args, exit=False))
 
         print "Running tests with class-based fixture grouping on sqlite"
         args = [
-            '-v',
+            '--verbosity=2',
             '--with-doctest',
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
             '--with-django-sqlite',
             'nosedjangotests.polls',
         ]
-        TestProgram(argv=args, exit=False)
+        test_results.append(TestProgram(argv=args, exit=False))
 
         print "Running tests with class-based fixture grouping multiprocess style"
         args = [
-            '-v',
+            '--verbosity=2',
             '--with-doctest',
             '--processes', '3',
             '--with-django',
@@ -72,32 +72,28 @@ class RunTests(Command):
             '--with-django-sqlite',
             'nosedjangotests.polls',
         ]
-        TestProgram(argv=args, exit=False)
+        test_results.append(TestProgram(argv=args, exit=False))
 
         print "Running tests with mysql. (will fail if mysql not configured)"
         args = [
-            '-v',
-            '--with-id',
+            '--verbosity=2',
             '--with-doctest',
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
-            '--slow-fixtures',
             'nosedjangotests.polls',
         ]
-        TestProgram(argv=args, exit=False)
+        test_results.append(TestProgram(argv=args, exit=False))
 
         print "Running tests with class-based fixture grouping on mysql."
         print "This will fail if mysql isn't configured"
         args = [
-            '-v',
-            '--with-id',
+            '--verbosity=2',
             '--with-doctest',
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
-            '--slow-fixtures',
             'nosedjangotests.polls',
         ]
-        TestProgram(argv=args, exit=False)
+        test_results.append(TestProgram(argv=args, exit=False))
 
         selenium_installed = False
         try:
@@ -110,17 +106,23 @@ class RunTests(Command):
             print "Running tests using selenium. (will fail if mysql not configured)"
             print "This will fail if mysql isn't configured"
             args = [
-                '-v',
-                '--with-id',
+            '--verbosity=2',
                 '--with-doctest',
                 '--with-django',
                 '--with-selenium',
                 '--django-settings', 'nosedjangotests.settings',
                 'nosedjangotests.selenium_tests',
             ]
-            TestProgram(argv=args, exit=False)
+            test_results.append(TestProgram(argv=args, exit=False))
 
         os.chdir(setup_dir)
+
+        if not any(test_results):
+            print "Success!"
+            exit(0)
+        else:
+            print "Failure :( Some of the tests failed. Scroll up for details"
+            exit(1)
 
     def initialize_options(self):
         pass
