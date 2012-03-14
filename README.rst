@@ -233,6 +233,16 @@ for that.
 
 Patches are welcome :)
 
+Continuous Integration
+----------------------
+
+The `nosedjango Jenkins server`_ is graciously hosted by `Shining Panda`.
+It allows us to test all supported versions of Django against all supported
+databases.
+
+.. _nosedjango Jenkins server: https://jenkins.shiningpanda.com/nosedjango/
+.. _Shining Panda: http://www.shiningpanda.com
+
 License
 -------
 
