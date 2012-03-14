@@ -20,7 +20,8 @@ class FixtureBleed1TestCase(BaseCase):
 
     def test_fixtures_loaded(self):
         num_polls = Poll.objects.all().count()
-        self.assertEqual(num_polls, 2)
+        # Ignore the evil __init__ overriding of self.fixtures
+        self.assertEqual(num_polls, 1)
 
 
 class FixtureBleed2TestCase(TestCase):

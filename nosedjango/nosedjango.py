@@ -351,6 +351,8 @@ class NoseDjango(Plugin):
                         self.disable_transaction_support(transaction)
 
                     # Load the new fixtures
+                    if self.verbosity >= 3:
+                        print "Loading fixtures: %s" % test.context.fixtures
                     if use_transaction_isolation:
                         call_command(
                             'loaddata',
@@ -434,6 +436,7 @@ class NoseDjango(Plugin):
 
             def _urlconf_teardown(self):
                 pass
+
 
         class TestCase(TransactionTestCase):
             use_transaction_isolation = True
