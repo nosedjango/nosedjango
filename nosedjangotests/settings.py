@@ -1,3 +1,5 @@
+from os import getenv
+
 from django.conf import global_settings
 
 DEBUG = True
@@ -20,6 +22,17 @@ if hasattr(global_settings, 'DATABASES'):
             'PORT': '',
         }
     }
+
+    if getenv('JENNKINS_URL', False):
+        # We're on Jenkins
+        DATABASES['default'].update({
+            'ENGINE': getenv('DBA_SQL_DJANGO_ENGINE'),
+            'USER': getenv('DBA_SQL_ADMIN'),
+            'PASSWORD': getenv('DBA_SQL_ADMIN_PASSWORD'),
+            'HOST': getenv('DBA_SQL_HOST'),
+            'PORT': getenv('DBA_SQL_PORT'),
+
+        })
 else:
     DATABASE_ENGINE = 'mysql'
     DATABASE_NAME = 'nosedjango'
@@ -27,6 +40,14 @@ else:
     DATABASE_PASSWORD = ''
     DATABASE_HOST = ''
     DATABASE_PORT = ''
+
+    if getenv('JENNKINS_URL', False):
+        # We're on Jenkins
+        DATABASE_ENGINE = getenv('DBA_SQL_DJANGO_ENGINE')
+        DATABASE_USER = getenv('DBA_SQL_ADMIN')
+        DATABASE_PASSWORD = getenv('DBA_SQL_ADMIN_PASSWORD')
+        DATABASE_HOST = getenv('DBA_SQL_HOST')
+        DATABASE_PORT = getenv('DBA_SQL_PORT')
 
 TIME_ZONE = 'America/Chicago'
 LANGUAGE_CODE = 'en-us'
