@@ -8,4 +8,5 @@ build
 dist
 # Generated docs
 README.html
-.noseids
+*.noseids
+*nosetests.xml
