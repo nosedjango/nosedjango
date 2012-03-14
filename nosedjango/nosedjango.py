@@ -227,6 +227,9 @@ class NoseDjango(Plugin):
         from django.test.utils import setup_test_environment, teardown_test_environment
         from django import VERSION as DJANGO_VERSION
 
+        use_transaction_isolation = self._should_use_transaction_isolation(
+            test, settings)
+
         if self._should_rebuild_schema(test):
             connection.creation.destroy_test_db(
                 self.old_db, verbosity=self.verbosity)
@@ -234,13 +237,17 @@ class NoseDjango(Plugin):
 
             setup_test_environment()
             connection.creation.create_test_db(verbosity=self.verbosity)
+            self.restore_transaction_support(transaction)
+            transaction.commit()
+            if transaction.is_managed():
+                transaction.leave_transaction_management()
+            # If connection is not closed Postgres can go wild with
+            # character encodings.
+            connection.close()
             logger.debug("Running syncdb")
             self._num_syncdb_calls += 1
             self._loaded_test_fixtures = []
             return
-
-        use_transaction_isolation = self._should_use_transaction_isolation(
-            test, settings)
 
         if use_transaction_isolation:
             self.restore_transaction_support(transaction)
