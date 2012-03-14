@@ -6,6 +6,7 @@ are run, and tears the test database (or schema) down after all tests are run.
 
 from __future__ import with_statement
 
+import logging
 import os
 import re
 import sys
@@ -19,6 +20,8 @@ from nose.plugins import Plugin
 from nose.importer import add_path
 if not 'DJANGO_SETTINGS_MODULE' in os.environ:
     os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+
+logger = logging.getLogger('nosedjango')
 
 NT_ROOT = re.compile(r"^[a-zA-Z]:\\$")
 def get_settings_path(settings_module):
@@ -178,6 +181,7 @@ class NoseDjango(Plugin):
         self.call_plugins_method(
             'beforeTestDb', settings, connection, management)
         connection.creation.create_test_db(verbosity=self.verbosity)
+        logger.debug("Running syncdb")
         self.call_plugins_method('afterTestDb', settings, connection)
 
     def _should_use_transaction_isolation(self, test, settings):
@@ -227,6 +231,7 @@ class NoseDjango(Plugin):
 
             setup_test_environment()
             connection.creation.create_test_db(verbosity=self.verbosity)
+            logger.debug("Running syncdb")
             self._loaded_test_fixtures = []
             return
 
@@ -235,6 +240,7 @@ class NoseDjango(Plugin):
 
         if use_transaction_isolation:
             self.restore_transaction_support(transaction)
+            logger.debug("Rolling back")
             transaction.rollback()
             if transaction.is_managed():
                 transaction.leave_transaction_management()
@@ -299,7 +305,7 @@ class NoseDjango(Plugin):
         from django.core.management import call_command
         ContentType.objects.clear_cache() # Otherwise django.contrib.auth.Permissions will depend on deleted ContentTypes
         call_command('flush', verbosity=0, interactive=False)
-
+        logger.debug("Flushing database")
 
     def beforeTest(self, test):
         """
@@ -351,8 +357,7 @@ class NoseDjango(Plugin):
                         self.disable_transaction_support(transaction)
 
                     # Load the new fixtures
-                    if self.verbosity >= 3:
-                        print "Loading fixtures: %s" % test.context.fixtures
+                    logger.debug("Loading fixtures: %s", test.context.fixtures)
                     if use_transaction_isolation:
                         call_command(
                             'loaddata',
@@ -404,8 +409,7 @@ class NoseDjango(Plugin):
         teardown_test_environment()
         self.call_plugins_method('afterTeardownTestEnv', settings)
 
-        if self.verbosity >= 2:
-            print "Loaded fixtures %s times" % self._num_fixture_loads
+        logger.info("Loaded fixtures %s times", self._num_fixture_loads)
         if hasattr(self, 'old_urlconf'):
             settings.ROOT_URLCONF = self.old_urlconf
             clear_url_caches()
