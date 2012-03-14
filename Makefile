@@ -10,6 +10,10 @@ build-jenkins-virtualenv:
 	pip install $(DBA_SQL_PACKAGE) coverage pylint
 	pip install psycopg2==2.4.1
 
+generate-coverage:
+	rm -f nosedjangotests/coverage.xml;
+	cd nosedjangotests && coverage xml;
+
 test:
 	cd nosedjangotests && nosetests --verbosity=3 --with-xunit --with-doctest --with-django --django-settings nosedjangotests.settings --with-django-testfs --debug="nose.plugins.nosedjango" --with-coverage nosedjangotests.polls
 
