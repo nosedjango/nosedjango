@@ -428,33 +428,19 @@ class NoseDjango(Plugin):
         # We're taking over all of the fixture management and such from the
         # django test classes. Dealing with switching back and forth between
         # them is a huge pita, and this just kind of works.
-        import django.test
-        class TransactionTestCase(django.test.TransactionTestCase):
-            use_transaction_isolation = False
+        import django.test.testcases
 
-            def _pre_setup(self):
-                pass
+        overrides = [
+            '_pre_setup',
+            '_fixture_setup',
+            '_urlconf_setup',
+            '_post_teardown',
+            '_fixture_teardown',
+            '_urlconf_teardown',
+        ]
+        for override in overrides:
+            setattr(django.test.testcases.TransactionTestCase, override, _dummy)
+            setattr(django.test.testcases.TestCase, override, _dummy)
 
-            def _fixture_setup(self):
-                pass
-
-            def _urlconf_setup(self):
-                pass
-
-            def _post_teardown(self):
-                pass
-
-            def _fixture_teardown(self):
-                pass
-
-            def _urlconf_teardown(self):
-                pass
-
-
-        class TestCase(TransactionTestCase):
-            use_transaction_isolation = True
-
-
-        django.test.TransactionTestCase = TransactionTestCase
-        django.test.TestCase = TestCase
-
+        setattr(django.test.testcases.TransactionTestCase, 'use_transaction_isolation', False)
+        setattr(django.test.testcases.TestCase, 'use_transaction_isolation', True)
