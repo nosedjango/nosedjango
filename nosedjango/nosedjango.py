@@ -21,7 +21,7 @@ from nose.importer import add_path
 if not 'DJANGO_SETTINGS_MODULE' in os.environ:
     os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 
-logger = logging.getLogger('nosedjango')
+logger = logging.getLogger('nose.plugins.nosedjango')
 
 NT_ROOT = re.compile(r"^[a-zA-Z]:\\$")
 def get_settings_path(settings_module):
@@ -409,10 +409,12 @@ class NoseDjango(Plugin):
         teardown_test_environment()
         self.call_plugins_method('afterTeardownTestEnv', settings)
 
-        logger.info("Loaded fixtures %s times", self._num_fixture_loads)
         if hasattr(self, 'old_urlconf'):
             settings.ROOT_URLCONF = self.old_urlconf
             clear_url_caches()
+
+    def report(self, stream):
+        stream.writeln("Loaded fixtures %s times" % self._num_fixture_loads)
 
     def _monkeypatch_test_classes(self):
         # Monkeypatching. Like a boss.
