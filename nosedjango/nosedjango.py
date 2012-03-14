@@ -66,6 +66,8 @@ class NoseDjango(Plugin):
 
         self._loaded_test_fixtures = []
         self._num_fixture_loads = 0
+        self._num_flush_calls = 0
+        self._num_syncdb_calls = 0
 
     def disable_transaction_support(self, transaction):
         self.orig_commit = transaction.commit
@@ -182,6 +184,7 @@ class NoseDjango(Plugin):
             'beforeTestDb', settings, connection, management)
         connection.creation.create_test_db(verbosity=self.verbosity)
         logger.debug("Running syncdb")
+        self._num_syncdb_calls += 1
         self.call_plugins_method('afterTestDb', settings, connection)
 
     def _should_use_transaction_isolation(self, test, settings):
@@ -232,6 +235,7 @@ class NoseDjango(Plugin):
             setup_test_environment()
             connection.creation.create_test_db(verbosity=self.verbosity)
             logger.debug("Running syncdb")
+            self._num_syncdb_calls += 1
             self._loaded_test_fixtures = []
             return
 
@@ -306,6 +310,7 @@ class NoseDjango(Plugin):
         ContentType.objects.clear_cache() # Otherwise django.contrib.auth.Permissions will depend on deleted ContentTypes
         call_command('flush', verbosity=0, interactive=False)
         logger.debug("Flushing database")
+        self._num_flush_calls += 1
 
     def beforeTest(self, test):
         """
@@ -415,6 +420,8 @@ class NoseDjango(Plugin):
 
     def report(self, stream):
         stream.writeln("Loaded fixtures %s times" % self._num_fixture_loads)
+        stream.writeln("Flushed the db %s times" % self._num_flush_calls)
+        stream.writeln("Sync'd the db %s times" % self._num_syncdb_calls)
 
     def _monkeypatch_test_classes(self):
         # Monkeypatching. Like a boss.
