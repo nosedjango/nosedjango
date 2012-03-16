@@ -185,6 +185,13 @@ of Django. If you have tests that depend on other tests modifying the cache
 (*tsk tsk tsk*), then you will need to modify those tests for them to work
 under Nosedjango.
 
+Modification of `TestCase.fixtures` ignored
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you relied on modifying the `fixtures` property of a `TestCase` either via
+the `__init__` or during an actual test, then you're a Bad Person. Also, NoseDjango
+won't respect this change and instead it will respect the value of `fixtures` that
+was assigned at class definition time.
 
 Plugin System
 -------------

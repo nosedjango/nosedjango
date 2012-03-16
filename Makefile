@@ -20,3 +20,6 @@ test:
 test-sqlite:
 	cd nosedjangotests && nosetests --verbosity=3 --with-xunit --with-doctest --with-django --django-settings nosedjangotests.settings --with-django-testfs --with-django-sqlite --debug="nose.plugins.nosedjango" --with-coverage nosedjangotests.polls
 
+test-multiprocess:
+	cd nosedjangotests && nosetests --verbosity=3 --with-doctest --with-django --django-settings nosedjangotests.settings --with-django-testfs --processes=2 --debug="nose.plugins.nosedjango" nosedjangotests.polls
+

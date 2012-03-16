@@ -14,7 +14,7 @@ MANAGERS = ADMINS
 if hasattr(global_settings, 'DATABASES'):
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
+            'ENGINE': 'django.db.backends.sqlite3',
             'NAME': 'nosedjango',
             'USER': 'root',
             'PASSWORD': '',
@@ -34,7 +34,7 @@ if hasattr(global_settings, 'DATABASES'):
 
         })
 else:
-    DATABASE_ENGINE = 'mysql'
+    DATABASE_ENGINE = 'sqlite3'
     DATABASE_NAME = 'nosedjango'
     DATABASE_USER = 'root'
     DATABASE_PASSWORD = ''
