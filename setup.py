@@ -117,7 +117,9 @@ class RunTests(Command):
 
         os.chdir(setup_dir)
 
-        if not any(test_results):
+        is_success = [tr.success for tr in test_results]
+
+        if all(is_success):
             print "Success!"
             exit(0)
         else:

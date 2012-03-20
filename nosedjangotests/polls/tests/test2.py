@@ -2,6 +2,7 @@ from django.conf import settings
 from django.test import TestCase
 
 from nosedjangotests.polls.models import Poll
+from nosedjangotests.polls.tests.test1 import _test_fixtures_2
 
 class BaseCase(TestCase):
 
@@ -43,7 +44,7 @@ class AltersBleed1TestCase(TestCase):
             cursor.execute('ALTER TABLE `polls_poll` CHANGE COLUMN `question` `question` varchar(201) COLLATE utf8_unicode_ci NOT NULL')
 
 class AltersBleed2TestCase(TestCase):
+    fixtures = ['polls2.json']
 
     def test_bleeding_alteration(self):
-        num_polls = Poll.objects.all().count()
-        self.assertEqual(num_polls, 0)
+        _test_fixtures_2(self)
