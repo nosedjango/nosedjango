@@ -1,3 +1,26 @@
+1.0.0b1
+-------
+
+released 2012-03-20
+
+Major changes afoot!
+
+* Run your tests multiprocess!
+* Nosedjango now has a plugin system including the following plugins:
+
+  * Multiprocess support
+  * Selenium
+  * Cherrpy test server
+  * Temporary file storage for testing
+  * Celery
+  * Sphinx Search
+  * In-memory sqlite
+  * SSH tunneling
+
+* All of your testcases that use fixtures are now much faster.
+  We use an improved transaction rollback strategy which optimizes away the
+  slowest part of your testcase (loading fixtures).
+
 0.8.1
 -----
 

@@ -5,7 +5,7 @@ or even write your own plugin that hooks in to the NoseDjango plugin system (a
 plugin with a plugin system!)
 """
 
-VERSION = (1, 0, 0, 'dev')
+VERSION = (1, 0, 0, 'b1')
 
 __version__ = ".".join(map(str, VERSION[:-1]))
 __release__ = ".".join(map(str, VERSION))
