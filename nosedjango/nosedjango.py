@@ -222,10 +222,8 @@ class NoseDjango(Plugin):
         """
         # Restore transaction support on tests
         from django.conf import settings
-        from django.contrib.contenttypes.models import ContentType
         from django.db import connection, transaction
         from django.test.utils import setup_test_environment, teardown_test_environment
-        from django import VERSION as DJANGO_VERSION
 
         use_transaction_isolation = self._should_use_transaction_isolation(
             test, settings)
@@ -267,55 +265,60 @@ class NoseDjango(Plugin):
             self._flush_db()
             self._loaded_test_fixtures = []
 
-            # In Django <1.2 Depending on the order of certain post-syncdb
-            # signals, ContentTypes can be removed accidentally. Manually delete and re-add all
-            # and recreate ContentTypes if we're using the contenttypes app
-            # See: http://code.djangoproject.com/ticket/9207
-            # See: http://code.djangoproject.com/ticket/7052
-            if DJANGO_VERSION[0] <= 1 and DJANGO_VERSION[1] < 2 \
-               and 'django.contrib.contenttypes' in settings.INSTALLED_APPS:
-                from django.contrib.contenttypes.management import update_all_contenttypes
-                from django.db import models
-                from django.contrib.auth.management import create_permissions
-                from django.contrib.auth.models import Permission
-
-                ContentType.objects.all().delete()
-                ContentType.objects.clear_cache()
-                update_all_contenttypes(verbosity=0)
-
-                # Because of various ways of handling auto-increment, we need to
-                # make sure the new contenttypes start at 1
-                next_pk = 1
-                content_types = list(ContentType.objects.all().order_by('pk'))
-                ContentType.objects.all().delete()
-                for ct in content_types:
-                    ct.pk = next_pk
-                    ct.save()
-                    next_pk += 1
-
-                # Because of the same problems with ContentTypes, we can get
-                # busted permissions
-                Permission.objects.all().delete()
-                for app in models.get_apps():
-                    create_permissions(app=app, created_models=None, verbosity=0)
-
-                # Because of various ways of handling auto-increment, we need to
-                # make sure the new permissions start at 1
-                next_pk = 1
-                permissions = list(Permission.objects.all().order_by('pk'))
-                Permission.objects.all().delete()
-                for perm in permissions:
-                    perm.pk = next_pk
-                    perm.save()
-                    next_pk += 1
 
         self.call_plugins_method('afterRollback', settings)
 
     def _flush_db(self):
-        from django.contrib.contenttypes.models import ContentType
+        from django import VERSION as DJANGO_VERSION
+        from django.conf import settings
         from django.core.management import call_command
-        ContentType.objects.clear_cache() # Otherwise django.contrib.auth.Permissions will depend on deleted ContentTypes
+
         call_command('flush', verbosity=0, interactive=False)
+
+        # In Django <1.2 Depending on the order of certain post-syncdb
+        # signals, ContentTypes can be removed accidentally. Manually delete and re-add all
+        # and recreate ContentTypes if we're using the contenttypes app
+        # See: http://code.djangoproject.com/ticket/9207
+        # See: http://code.djangoproject.com/ticket/7052
+        if DJANGO_VERSION[0] <= 1 and DJANGO_VERSION[1] < 2 \
+           and 'django.contrib.contenttypes' in settings.INSTALLED_APPS:
+            # TODO: Only mysql actually needs this
+            from django.contrib.contenttypes.models import ContentType
+            from django.contrib.contenttypes.management import update_all_contenttypes
+            from django.db import models
+            from django.contrib.auth.management import create_permissions
+            from django.contrib.auth.models import Permission
+
+            ContentType.objects.all().delete()
+            ContentType.objects.clear_cache()
+            update_all_contenttypes(verbosity=0)
+
+            # Because of various ways of handling auto-increment, we need to
+            # make sure the new contenttypes start at 1
+            next_pk = 1
+            content_types = list(ContentType.objects.all().order_by('pk'))
+            ContentType.objects.all().delete()
+            for ct in content_types:
+                ct.pk = next_pk
+                ct.save()
+                next_pk += 1
+
+            # Because of the same problems with ContentTypes, we can get
+            # busted permissions
+            Permission.objects.all().delete()
+            for app in models.get_apps():
+                create_permissions(app=app, created_models=None, verbosity=0)
+
+            # Because of various ways of handling auto-increment, we need to
+            # make sure the new permissions start at 1
+            next_pk = 1
+            permissions = list(Permission.objects.all().order_by('pk'))
+            Permission.objects.all().delete()
+            for perm in permissions:
+                perm.pk = next_pk
+                perm.save()
+                next_pk += 1
+
         logger.debug("Flushing database")
         self._num_flush_calls += 1
 
@@ -362,9 +365,12 @@ class NoseDjango(Plugin):
                     # Only clear + load the fixtures if they're not already loaded
 
                     # Flush previous fixtures
-                    self._flush_db()
                     if use_transaction_isolation:
                         self.restore_transaction_support(transaction)
+
+                    self._flush_db()
+
+                    if use_transaction_isolation:
                         transaction.commit()
                         self.disable_transaction_support(transaction)
 
