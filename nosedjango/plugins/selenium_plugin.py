@@ -8,11 +8,6 @@ from pprint import pprint
 
 import nose.case
 
-from selenium.webdriver import Firefox as FirefoxWebDriver
-from selenium.webdriver import Chrome as ChromeDriver
-from selenium.webdriver import Remote as RemoteDriver
-from selenium.webdriver.common.exceptions import WebDriverException
-
 from nosedjango.plugins.base_plugin import Plugin
 
 class SeleniumPlugin(Plugin):
@@ -66,6 +61,10 @@ class SeleniumPlugin(Plugin):
         Plugin.configure(self, options, config)
 
     def get_driver(self):
+        from selenium.webdriver import Firefox as FirefoxWebDriver
+        from selenium.webdriver import Chrome as ChromeDriver
+        from selenium.webdriver import Remote as RemoteDriver
+
         # Lazilly gets the driver one time cant call in begin since ssh tunnel
         # may not be created
         if self._driver:
@@ -214,6 +213,8 @@ def monkey_patch_methods(driver):
     driver.__class__.quit = new_quit
 
 def accept_alert(driver):
+    from selenium.common.exceptions import WebDriverException
+
     alert = driver.switch_to_alert()
     try:
         alert.accept()
