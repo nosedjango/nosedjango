@@ -167,12 +167,14 @@ class NoseDjango(Plugin):
         from django.test.utils import setup_test_environment
 
         self.old_db = hasattr(settings, 'DATABASES') and settings.DATABASES['default']['NAME'] or settings.DATABASE_NAME
-        from django.db import connection
+        from django.db import connections
 
         self._monkeypatch_test_classes()
 
-        self.call_plugins_method(
-            'beforeTestSetup', settings, setup_test_environment, connection)
+        for connection in connections.all():
+            self.call_plugins_method(
+                'beforeTestSetup', settings, setup_test_environment,
+                connection)
         setup_test_environment()
         self.call_plugins_method('afterTestSetup', settings)
 
@@ -180,12 +182,13 @@ class NoseDjango(Plugin):
         # Ensure that nothing (eg. South) steals away our syncdb command
         management._commands['syncdb'] = 'django.core'
 
-        self.call_plugins_method(
-            'beforeTestDb', settings, connection, management)
-        connection.creation.create_test_db(verbosity=self.verbosity)
-        logger.debug("Running syncdb")
-        self._num_syncdb_calls += 1
-        self.call_plugins_method('afterTestDb', settings, connection)
+        for connection in connections.all():
+            self.call_plugins_method(
+                'beforeTestDb', settings, connection, management)
+            connection.creation.create_test_db(verbosity=self.verbosity)
+            logger.debug("Running syncdb")
+            self._num_syncdb_calls += 1
+            self.call_plugins_method('afterTestDb', settings, connection)
 
     def _should_use_transaction_isolation(self, test, settings):
         """
@@ -222,26 +225,31 @@ class NoseDjango(Plugin):
         """
         # Restore transaction support on tests
         from django.conf import settings
-        from django.db import connection, transaction
+        from django.db import connections, transaction
         from django.test.utils import setup_test_environment, teardown_test_environment
 
         use_transaction_isolation = self._should_use_transaction_isolation(
             test, settings)
 
         if self._should_rebuild_schema(test):
-            connection.creation.destroy_test_db(
-                self.old_db, verbosity=self.verbosity)
+            for connection in connections.all():
+                connection.creation.destroy_test_db(
+                    self.old_db, verbosity=self.verbosity)
+
             teardown_test_environment()
 
             setup_test_environment()
-            connection.creation.create_test_db(verbosity=self.verbosity)
+            for connection in connections.all():
+                connection.creation.create_test_db(verbosity=self.verbosity)
+
             self.restore_transaction_support(transaction)
             transaction.commit()
             if transaction.is_managed():
                 transaction.leave_transaction_management()
             # If connection is not closed Postgres can go wild with
             # character encodings.
-            connection.close()
+            for connection in connections.all():
+                connection.close()
             logger.debug("Running syncdb")
             self._num_syncdb_calls += 1
             self._loaded_test_fixtures = []
@@ -255,7 +263,8 @@ class NoseDjango(Plugin):
                 transaction.leave_transaction_management()
             # If connection is not closed Postgres can go wild with
             # character encodings.
-            connection.close()
+            for connection in connections.all():
+                connection.close()
         else:
             # Have to clear the db even if we're using django because django
             # doesn't properly flush the database after a test. It relies on
