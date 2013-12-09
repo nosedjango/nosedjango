@@ -2,8 +2,6 @@ import os
 import time
 
 from django.core.handlers.wsgi import WSGIHandler
-from django.core.servers.basehttp import  AdminMediaHandler
-
 from nosedjango.plugins.base_plugin import Plugin
 
 # Next 3 plugins taken from django-sane-testing: http://github.com/Almad/django-sane-testing
@@ -51,6 +49,7 @@ class CherryPyLiveServerPlugin(Plugin):
         self.stop_test_server()
 
     def start_server(self, address='0.0.0.0', port=8000):
+        from django.core.servers.basehttp import  AdminMediaHandler
         _application = AdminMediaHandler(WSGIHandler())
 
         def application(environ, start_response):
