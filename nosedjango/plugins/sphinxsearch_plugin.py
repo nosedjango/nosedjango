@@ -35,6 +35,8 @@ class SphinxSearchPlugin(Plugin):
         ``database_name``
         ``database_password``
         ``database_username``
+        ``database_host``
+        ``database_port``
         ``sphinx_search_data_dir``
         ``searchd_log_dir``
         """
@@ -81,6 +83,8 @@ class SphinxSearchPlugin(Plugin):
                         'database_name': db_dict['NAME'],
                         'database_username': db_dict['USER'],
                         'database_password': db_dict['PASSWORD'],
+                        'database_host': db_dict['HOST'],
+                        'database_port': db_dict['PORT'],
                         'sphinx_search_data_dir': self.tmp_sphinx_dir,
                         'searchd_log_dir': self.tmp_sphinx_dir,
                     }
