@@ -147,7 +147,7 @@ setup(
     extras_require = {
         'selenium': ['selenium>=2.0'],
     },
-    dependency_links = ['hg+http://bitbucket.org/jpellerin/nose/@release_0.11.4#egg=nose-0.11.4.dev'],
+    dependency_links = ['http://bitbucket.org/jpellerin/nose/get/release_0.11.4.zip#egg=nose-0.11.4.dev'],
     url = "http://github.com/nosedjango/nosedjango",
     license = 'GNU LGPL',
     packages = find_packages(exclude=['nosedjangotests', 'nosedjangotests.*']),
