@@ -1,6 +1,9 @@
 Nose django helper plugin
 =========================
 
+.. image:: https://travis-ci.org/nosedjango/nosedjango.svg?branch=issue_30
+    :target: https://travis-ci.org/nosedjango/nosedjango
+
 Nosedjango brings the goodness of Nose and its plugin ecosystem to the world of
 Django testing. Nose already has plugins for multiprocessing, coverage, tagging,
 profiling, skipping, xunit plugin and most everything else you could need. 
