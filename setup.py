@@ -30,6 +30,7 @@ class RunTests(Command):
 
         print "Running tests with sqlite"
         args = [
+            '-v',
             '--verbosity=2',
             '--with-doctest',
             '--with-django',
@@ -41,6 +42,7 @@ class RunTests(Command):
 
         print "Running tests multiprocess"
         args = [
+            '-v',
             '--verbosity=2',
             '--with-doctest',
             '--processes', '3',
@@ -53,6 +55,7 @@ class RunTests(Command):
 
         print "Running tests with class-based fixture grouping on sqlite"
         args = [
+            '-v',
             '--verbosity=2',
             '--with-doctest',
             '--with-django',
@@ -64,6 +67,7 @@ class RunTests(Command):
 
         print "Running tests with class-based fixture grouping multiprocess style"
         args = [
+            '-v',
             '--verbosity=2',
             '--with-doctest',
             '--processes', '3',
@@ -76,6 +80,7 @@ class RunTests(Command):
 
         print "Running tests with mysql. (will fail if mysql not configured)"
         args = [
+            '-v',
             '--verbosity=2',
             '--with-doctest',
             '--with-django',
@@ -87,6 +92,7 @@ class RunTests(Command):
         print "Running tests with class-based fixture grouping on mysql."
         print "This will fail if mysql isn't configured"
         args = [
+            '-v',
             '--verbosity=2',
             '--with-doctest',
             '--with-django',
@@ -106,7 +112,8 @@ class RunTests(Command):
             print "Running tests using selenium. (will fail if mysql not configured)"
             print "This will fail if mysql isn't configured"
             args = [
-            '--verbosity=2',
+                '-v',
+                '--verbosity=2',
                 '--with-doctest',
                 '--with-django',
                 '--with-selenium',
@@ -143,10 +150,11 @@ setup(
     author=nosedjango.__author__,
     author_email=nosedjango.__contact__,
     long_description=long_description,
-    install_requires=['nose>=0.11', 'django>=1.3'],
+    install_requires=['nose<1.0', 'django<1.4'],
     extras_require = {
         'selenium': ['selenium>=2.0'],
     },
+    dependency_links = ['http://bitbucket.org/jpellerin/nose/get/release_0.11.4.zip#egg=nose-0.11.4.dev'],
     url = "http://github.com/nosedjango/nosedjango",
     license = 'GNU LGPL',
     packages = find_packages(exclude=['nosedjangotests', 'nosedjangotests.*']),
