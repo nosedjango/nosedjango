@@ -163,7 +163,7 @@ setup(
     author=nosedjango.__author__,
     author_email=nosedjango.__contact__,
     long_description=long_description,
-    install_requires=['nose<1.0', 'django<1.5'],
+    install_requires=['nose<2.0', 'django<1.5'],
     extras_require={
         'selenium': ['selenium>=2.0'],
     },
