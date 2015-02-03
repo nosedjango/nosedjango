@@ -4,6 +4,7 @@ import sys
 
 from setuptools import setup, find_packages, Command
 
+
 class RunTests(Command):
     description = "Run the test suite from the tests dir."
     user_options = []
@@ -65,7 +66,7 @@ class RunTests(Command):
         ]
         test_results.append(TestProgram(argv=args, exit=False))
 
-        print "Running tests with class-based fixture grouping multiprocess style"
+        print "Running tests with class-based fixture grouping multiprocess style"  # noqa
         args = [
             '-v',
             '--verbosity=2',
@@ -109,7 +110,7 @@ class RunTests(Command):
             print "Selenium not installed. Skipping tests."
             # No Selenium
         if selenium_installed:
-            print "Running tests using selenium. (will fail if mysql not configured)"
+            print "Running tests using selenium. (will fail if mysql not configured)"  # noqa
             print "This will fail if mysql isn't configured"
             args = [
                 '-v',
@@ -154,20 +155,20 @@ setup(
     extras_require = {
         'selenium': ['selenium>=2.0'],
     },
-    dependency_links = ['http://bitbucket.org/jpellerin/nose/get/release_0.11.4.zip#egg=nose-0.11.4.dev'],
-    url = "http://github.com/nosedjango/nosedjango",
-    license = 'GNU LGPL',
-    packages = find_packages(exclude=['nosedjangotests', 'nosedjangotests.*']),
-    zip_safe = False,
-    cmdclass = {'test': RunTests},
-    include_package_data = True,
-    entry_points = {
+    dependency_links=['http://bitbucket.org/jpellerin/nose/get/release_0.11.4.zip#egg=nose-0.11.4.dev'],  # noqa
+    url="http://github.com/nosedjango/nosedjango",
+    license='GNU LGPL',
+    packages=find_packages(exclude=['nosedjangotests', 'nosedjangotests.*']),
+    zip_safe=False,
+    cmdclass={'test': RunTests},
+    include_package_data=True,
+    entry_points={
         'nose.plugins': [
             'celery = nosedjango.plugins.celery_plugin:CeleryPlugin',
-            'cherrypyliveserver = nosedjango.plugins.cherrypy_plugin:CherryPyLiveServerPlugin',
+            'cherrypyliveserver = nosedjango.plugins.cherrypy_plugin:CherryPyLiveServerPlugin',  # noqa
             'django = nosedjango.nosedjango:NoseDjango',
-            'djangofilestorage = nosedjango.plugins.file_storage_plugin:FileStoragePlugin',
-            'djangosphinxsearch = nosedjango.plugins.sphinxsearch_plugin:SphinxSearchPlugin',
+            'djangofilestorage = nosedjango.plugins.file_storage_plugin:FileStoragePlugin',  # noqa
+            'djangosphinxsearch = nosedjango.plugins.sphinxsearch_plugin:SphinxSearchPlugin',  # noqa
             'djangosqlite = nosedjango.plugins.sqlite_plugin:SqlitePlugin',
             'selenium = nosedjango.plugins.selenium_plugin:SeleniumPlugin',
             'sshtunnel = nosedjango.plugins.ssh_tunnel_plugin:SshTunnelPlugin',
