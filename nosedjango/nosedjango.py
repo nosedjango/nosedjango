@@ -169,7 +169,10 @@ class NoseDjango(Plugin):
         from django.core import management
         from django.test.utils import setup_test_environment
 
-        self.old_db = hasattr(settings, 'DATABASES') and settings.DATABASES['default']['NAME'] or settings.DATABASE_NAME  # noqa
+        if hasattr(settings, 'DATABASES'):
+            self.old_db = settings.DATABASES['default']['NAME']
+        else:
+            self.old_db = settings.DATABASE_NAME
         from django.db import connections
 
         self._monkeypatch_test_classes()
