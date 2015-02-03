@@ -4,6 +4,7 @@
 *.swp
 *.db
 *.egg-info
+*.egg
 build
 dist
 # Generated docs
