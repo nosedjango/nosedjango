@@ -18,12 +18,14 @@ from nose.plugins import Plugin
 # search the current working directory and all parent directories to find
 # the settings file
 from nose.importer import add_path
-if not 'DJANGO_SETTINGS_MODULE' in os.environ:
+if 'DJANGO_SETTINGS_MODULE' not in os.environ:
     os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 
 logger = logging.getLogger('nose.plugins.nosedjango')
 
 NT_ROOT = re.compile(r"^[a-zA-Z]:\\$")
+
+
 def get_settings_path(settings_module):
     '''
     Hunt down the settings.py module by going up the FS path
@@ -41,6 +43,7 @@ def get_settings_path(settings_module):
         elif cwd == '/':
             return None
     return cwd
+
 
 def _dummy(*args, **kwargs):
     """Dummy function that replaces the transaction functions"""
@@ -166,7 +169,10 @@ class NoseDjango(Plugin):
         from django.core import management
         from django.test.utils import setup_test_environment
 
-        self.old_db = hasattr(settings, 'DATABASES') and settings.DATABASES['default']['NAME'] or settings.DATABASE_NAME
+        if hasattr(settings, 'DATABASES'):
+            self.old_db = settings.DATABASES['default']['NAME']
+        else:
+            self.old_db = settings.DATABASE_NAME
         from django.db import connections
 
         self._monkeypatch_test_classes()
@@ -192,14 +198,15 @@ class NoseDjango(Plugin):
 
     def _should_use_transaction_isolation(self, test, settings):
         """
-        Determine if the given test supports transaction management for database
-        rollback test isolation and also whether or not the test has opted out
-        of that support.
+        Determine if the given test supports transaction management for
+        database rollback test isolation and also whether or not the test has
+        opted out of that support.
 
         Transactions make database rollback much quicker when supported, with
-        the caveat that any tests that are explicitly testing transactions won't
-        work properly and any tests that depend on external access to the test
-        database won't be able to view data created/altered during the test.
+        the caveat that any tests that are explicitly testing transactions
+        won't work properly and any tests that depend on external access to the
+        test database won't be able to view data created/altered during the
+        test.
         """
         if not getattr(test.context, 'use_transaction_isolation', True):
             # The test explicitly says not to use transaction isolation
@@ -226,7 +233,10 @@ class NoseDjango(Plugin):
         # Restore transaction support on tests
         from django.conf import settings
         from django.db import connections, transaction
-        from django.test.utils import setup_test_environment, teardown_test_environment
+        from django.test.utils import (
+            setup_test_environment,
+            teardown_test_environment,
+        )
 
         use_transaction_isolation = self._should_use_transaction_isolation(
             test, settings)
@@ -268,12 +278,11 @@ class NoseDjango(Plugin):
         else:
             # Have to clear the db even if we're using django because django
             # doesn't properly flush the database after a test. It relies on
-            # flushing before a test, so we want to avoid the case where a django
-            # test doesn't flush and then a normal test runs, because it will
-            # expect the db to already be flushed
+            # flushing before a test, so we want to avoid the case where a
+            # django test doesn't flush and then a normal test runs, because it
+            # will expect the db to already be flushed
             self._flush_db()
             self._loaded_test_fixtures = []
-
 
         self.call_plugins_method('afterRollback', settings)
 
@@ -285,15 +294,18 @@ class NoseDjango(Plugin):
         call_command('flush', verbosity=0, interactive=False)
 
         # In Django <1.2 Depending on the order of certain post-syncdb
-        # signals, ContentTypes can be removed accidentally. Manually delete and re-add all
-        # and recreate ContentTypes if we're using the contenttypes app
+        # signals, ContentTypes can be removed accidentally. Manually delete
+        # and re-add all and recreate ContentTypes if we're using the
+        # contenttypes app
         # See: http://code.djangoproject.com/ticket/9207
         # See: http://code.djangoproject.com/ticket/7052
         if DJANGO_VERSION[0] <= 1 and DJANGO_VERSION[1] < 2 \
            and 'django.contrib.contenttypes' in settings.INSTALLED_APPS:
             # TODO: Only mysql actually needs this
             from django.contrib.contenttypes.models import ContentType
-            from django.contrib.contenttypes.management import update_all_contenttypes
+            from django.contrib.contenttypes.management import (
+                update_all_contenttypes,
+            )
             from django.db import models
             from django.contrib.auth.management import create_permissions
             from django.contrib.auth.models import Permission
@@ -351,16 +363,26 @@ class NoseDjango(Plugin):
             test, settings)
 
         if use_transaction_isolation:
-            self.call_plugins_method('beforeTransactionManagement', settings, test)
+            self.call_plugins_method(
+                'beforeTransactionManagement',
+                settings,
+                test,
+            )
             transaction.enter_transaction_management()
             transaction.managed(True)
             self.disable_transaction_support(transaction)
 
         Site.objects.clear_cache()
-        ContentType.objects.clear_cache() # Otherwise django.contrib.auth.Permissions will depend on deleted ContentTypes
+        # Otherwise django.contrib.auth.Permissions will depend on deleted
+        # ContentTypes
+        ContentType.objects.clear_cache()
 
         if use_transaction_isolation:
-            self.call_plugins_method('afterTransactionManagement', settings, test)
+            self.call_plugins_method(
+                'afterTransactionManagement',
+                settings,
+                test,
+            )
 
         self.call_plugins_method('beforeFixtureLoad', settings, test)
         if isinstance(test, nose.case.Test):
@@ -371,7 +393,8 @@ class NoseDjango(Plugin):
                 # that we're using *args and **kwargs together.
                 ordered_fixtures = sorted(test.context.fixtures)
                 if ordered_fixtures != self._loaded_test_fixtures:
-                    # Only clear + load the fixtures if they're not already loaded
+                    # Only clear + load the fixtures if they're not already
+                    # loaded
 
                     # Flush previous fixtures
                     if use_transaction_isolation:
@@ -410,7 +433,7 @@ class NoseDjango(Plugin):
             # We have to use this slightly awkward syntax due to the fact
             # that we're using *args and **kwargs together.
             self.old_urlconf = settings.ROOT_URLCONF
-            settings.ROOT_URLCONF = self.urls
+            settings.ROOT_URLCONF = test.context.urls
             clear_url_caches()
         self.call_plugins_method('afterUrlConfLoad', settings, test)
 
@@ -428,7 +451,10 @@ class NoseDjango(Plugin):
         from django.core.urlresolvers import clear_url_caches
 
         self.call_plugins_method('beforeDestroyTestDb', settings, connection)
-        connection.creation.destroy_test_db(self.old_db, verbosity=self.verbosity)
+        connection.creation.destroy_test_db(
+            self.old_db,
+            verbosity=self.verbosity,
+        )
         self.call_plugins_method('afterDestroyTestDb', settings, connection)
 
         self.call_plugins_method(
@@ -461,8 +487,20 @@ class NoseDjango(Plugin):
             '_urlconf_teardown',
         ]
         for override in overrides:
-            setattr(django.test.testcases.TransactionTestCase, override, _dummy)
+            setattr(
+                django.test.testcases.TransactionTestCase,
+                override,
+                _dummy,
+            )
             setattr(django.test.testcases.TestCase, override, _dummy)
 
-        setattr(django.test.testcases.TransactionTestCase, 'use_transaction_isolation', False)
-        setattr(django.test.testcases.TestCase, 'use_transaction_isolation', True)
+        setattr(
+            django.test.testcases.TransactionTestCase,
+            'use_transaction_isolation',
+            False,
+        )
+        setattr(
+            django.test.testcases.TestCase,
+            'use_transaction_isolation',
+            True,
+        )

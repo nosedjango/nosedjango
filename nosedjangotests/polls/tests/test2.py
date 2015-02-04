@@ -4,6 +4,7 @@ from django.test import TestCase
 from nosedjangotests.polls.models import Poll
 from nosedjangotests.polls.tests.test1 import _test_fixtures_2
 
+
 class BaseCase(TestCase):
 
     def __init__(self, *args, **kwargs):
@@ -13,6 +14,7 @@ class BaseCase(TestCase):
 
     def setUp(self):
         pass
+
 
 class FixtureBleed1TestCase(BaseCase):
     fixtures = [
@@ -38,10 +40,15 @@ class AltersBleed1TestCase(TestCase):
     rebuild_schema = True
 
     def test_db_alteration(self):
-        if hasattr(settings, 'DATABASES') and settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql' or settings.DATABASE_NAME == 'mysql':
+        if (
+                hasattr(settings, 'DATABASES') and settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql'  # noqa
+        ) or (
+                hasattr(settings, 'DATABASE_NAME') and settings.DATABASE_NAME == 'mysql'  # noqa
+        ):
             from django.db import connection
             cursor = connection.cursor()
-            cursor.execute('ALTER TABLE `polls_poll` CHANGE COLUMN `question` `question` varchar(201) COLLATE utf8_unicode_ci NOT NULL')
+            cursor.execute('ALTER TABLE `polls_poll` CHANGE COLUMN `question` `question` varchar(201) COLLATE utf8_unicode_ci NOT NULL')  # noqa
+
 
 class AltersBleed2TestCase(TestCase):
     fixtures = ['polls2.json']

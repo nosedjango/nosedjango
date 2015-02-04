@@ -5,6 +5,7 @@
 *.db
 *.egg-info
 *.tox
+*.egg
 build
 dist
 # Generated docs

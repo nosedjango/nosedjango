@@ -7,16 +7,12 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
-    }
-}
+DATABASE_ENGINE = 'sqlite3'
+DATABASE_NAME = 'nosedjango'
+DATABASE_USER = 'root'
+DATABASE_PASSWORD = ''
+DATABASE_HOST = ''
+DATABASE_PORT = ''
 
 TIME_ZONE = 'America/Chicago'
 LANGUAGE_CODE = 'en-us'
