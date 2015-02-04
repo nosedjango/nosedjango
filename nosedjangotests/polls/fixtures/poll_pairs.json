@@ -1,0 +1,10 @@
+[
+    {
+        "pk": 1, 
+        "model": "polls.pollpair", 
+        "fields": {
+            "last_poll": 2, 
+            "first_poll": 1
+        }
+    }
+]
