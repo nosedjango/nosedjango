@@ -433,7 +433,7 @@ class NoseDjango(Plugin):
             # We have to use this slightly awkward syntax due to the fact
             # that we're using *args and **kwargs together.
             self.old_urlconf = settings.ROOT_URLCONF
-            settings.ROOT_URLCONF = self.urls
+            settings.ROOT_URLCONF = test.context.urls
             clear_url_caches()
         self.call_plugins_method('afterUrlConfLoad', settings, test)
 
