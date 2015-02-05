@@ -4,6 +4,7 @@
 *.swp
 *.db
 *.egg-info
+*.tox
 *.egg
 build
 dist

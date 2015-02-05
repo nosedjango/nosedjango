@@ -1,0 +1,11 @@
+include AUTHORS
+include CHANGELOG.rst
+include LICENSE
+include Makefile
+include README.rst
+include docs/Makefile
+recursive-include examples/project/templates *.html
+recursive-include examples *.py
+recursive-include nosedjangotests *.py *.json
+recursive-include docs *.rst *.py
+prune docs/_build/html
