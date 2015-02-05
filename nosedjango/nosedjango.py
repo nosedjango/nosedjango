@@ -25,7 +25,6 @@ logger = logging.getLogger('nose.plugins.nosedjango')
 
 NT_ROOT = re.compile(r"^[a-zA-Z]:\\$")
 
-
 def get_settings_path(settings_module):
     '''
     Hunt down the settings.py module by going up the FS path
