@@ -9,12 +9,14 @@ from django.test import TestCase
 
 from nosedjangotests.polls.models import Poll, Choice
 
+
 def _test_using_content_types(self):
     p1, _ = Poll.objects.get_or_create(
         question='Who you?', pub_date=datetime.datetime.now())
 
     choice1 = Choice(poll=p1, choice='me')
     choice1.save()
+
 
 def _test_get_contenttypes(self):
     models = [Poll, Choice]
@@ -28,6 +30,7 @@ def _test_get_contenttypes(self):
             self.assertEqual(
                 getattr(ct_db, attr), getattr(content_type, attr))
 
+
 def _test_permissions(self):
     perm_types = ['add', 'change', 'delete']
     models = [(Poll, 'poll'), (Choice, 'choice')]
@@ -39,6 +42,7 @@ def _test_permissions(self):
             num_perms = Permission.objects.filter(
                 codename=codename, content_type=content_type).count()
             self.assertEqual(num_perms, 1)
+
 
 def _test_fixtures_1(self):
     num_polls = Poll.objects.all().count()
@@ -52,27 +56,16 @@ def _test_fixtures_1(self):
         pub_date=datetime.datetime.now())
     new_poll.save()
 
+
 def _test_fixtures_2(self):
-    num_polls = Poll.objects.all().count()
-    self.assertEqual(num_polls, 1)
-
-    wood_poll = Poll.objects.get(pk=2)
-    self.assertEqual(wood_poll.question, 'Is there fire wood on the island?')
-
-    new_poll = Poll.objects.create(
-        question="Did my shoes come off in the plane crash?",
-        pub_date=datetime.datetime.now())
-    new_poll.save()
-
-def _test_multiple_fixtures(self):
     num_polls = Poll.objects.all().count()
     self.assertEqual(num_polls, 2)
 
+    fox_poll = Poll.objects.get(pk=1)
+    self.assertEqual(fox_poll.question, 'What does the fox say?')
+
     wood_poll = Poll.objects.get(pk=2)
     self.assertEqual(wood_poll.question, 'Is there fire wood on the island?')
-
-    bear_poll = Poll.objects.get(pk=1)
-    self.assertEqual(bear_poll.question, 'What bear is best?')
 
     new_poll = Poll.objects.create(
         question="Did my shoes come off in the plane crash?",
@@ -268,6 +261,3 @@ class MultipleFixtureTestCase(UnitTestCase):
 
     def test_permissions_2(self):
         _test_permissions(self)
-
-    def test_multiple_fixtures(self):
-        _test_multiple_fixtures(self)
