@@ -15,14 +15,3 @@ class Choice(models.Model):
 
     choice = models.CharField(max_length=200)
     votes = models.IntegerField(default=0)
-
-
-class PollPair(models.Model):
-    first_poll = models.ForeignKey(
-        Poll,
-        related_name='first_pairs',
-    )
-    last_poll = models.ForeignKey(
-        Poll,
-        related_name='last_pairs',
-    )
