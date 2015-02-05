@@ -237,6 +237,8 @@ class NoseDjango(Plugin):
             setup_test_environment,
             teardown_test_environment,
         )
+        from django.core import mail
+        mail.outbox = []
 
         use_transaction_isolation = self._should_use_transaction_isolation(
             test, settings)
