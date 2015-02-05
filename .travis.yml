@@ -5,12 +5,11 @@ before_install:
     - "export DISPLAY=:99.0"
     - "sh -e /etc/init.d/xvfb start"
 env:
-    - TOX_ENV=py26-nose1.3.X-django1.3.X
     - TOX_ENV=py26-nose1.3.X-django1.4.X
-    - TOX_ENV=py27-nose1.3.X-django1.3.X
+    - TOX_ENV=py26-nose1.3.X-django1.6.X
     - TOX_ENV=py27-nose1.3.X-django1.4.X
-    - TOX_ENV=docs
-    - TOX_ENV=flake8
+    - TOX_ENV=py27-nose1.3.X-django1.6.X
+    - TOX_ENV=py27-nose1.3.X-django1.7.X
 install: 
     - pip install tox
 script: tox -e $TOX_ENV
