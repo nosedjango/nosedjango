@@ -1,15 +1,14 @@
 from django.test import TestCase, TransactionTestCase
 
-from nosedjangotests.polls.models import Poll, PollPair
+from nosedjangotests.polls.models import Choice, Poll, PollPair
 from nosedjangotests.polls.tests.test1 import (
     _test_fixtures_1,
     _test_fixtures_2,
 )
-
-
-def _assert_no_data(self):
-    self.assertEqual(Poll.objects.count(), 0)
-    self.assertEqual(PollPair.objects.count(), 0)
+from nosedjangotests.polls.test_helpers import (
+    ClientTestCase,
+    FactoryClientTestCase,
+)
 
 
 class AAATestCase(TransactionTestCase):
@@ -30,19 +29,26 @@ class BBBTestCase(TestCase):
         _test_fixtures_1(self)
 
 
-class CCCBrokenFixtureTestCase(TestCase):
+class CCCFixtureTestCase(ClientTestCase):
     fixtures = [
+        'choices',
+        'polls1',
         'poll_pairs',
     ]
 
-    def test(self):
-        pp = PollPair.objects.get(pk=1)
-        assert pp.first_poll
-        _assert_no_data(self)
+    def test_to_load_fixtures(self):
+        self.assertEqual(PollPair.objects.filter(pk=1).count(), 1)
+        self.assertEqual(Poll.objects.count(), 1)
+        self.assertEqual(Choice.objects.count(), 1)
 
 
-class DDDAfterBrokenFixtureNoLeftoversTestCase(TestCase):
-    fixtures = []
+class _SharedBaseTestCase(FactoryClientTestCase):
+    def setUp(self):
+        super(_SharedBaseTestCase, self).setUp()
 
-    def test(self):
-        _assert_no_data(self)
+
+class DDDNoLeftoverFixturesTestCase(_SharedBaseTestCase):
+    def test_no_data_left_over_from_previous_fixture(self):
+        self.assertEqual(Poll.objects.count(), 0)
+        self.assertEqual(PollPair.objects.count(), 0)
+        self.assertEqual(Choice.objects.count(), 0)
