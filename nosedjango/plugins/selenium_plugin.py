@@ -10,30 +10,49 @@ import nose.case
 
 from nosedjango.plugins.base_plugin import Plugin
 
+
 class SeleniumPlugin(Plugin):
     name = 'selenium'
 
     def options(self, parser, env=None):
         if env is None:
             env = os.environ
-        parser.add_option('--selenium-ss-dir',
-                          help='Directory for failure screen shots.'
-                          )
-        parser.add_option('--headless',
-                          help="Run the Selenium tests in a headless mode, with virtual frames starting with the given index (eg. 1)",
-                          default=None)
-        parser.add_option('--driver-type',
-                          help='The type of driver that needs to be created',
-                          default='firefox')
-        parser.add_option('--remote-server-address',
-                          help='Use a remote server to run the tests, must pass in the server address',
-                          default='localhost')
-        parser.add_option('--selenium-port',
-                          help='The port for the selenium server',
-                          default='4444')
-        parser.add_option('--track-stats',
-                          help='After the suite is run print a table of test name/runtime/number of trips to the server.  defaults to ordering by trips to the server',
-                          default=None)
+        parser.add_option(
+            '--selenium-ss-dir',
+            help='Directory for failure screen shots.'
+        )
+        parser.add_option(
+            '--headless',
+            help=(
+                "Run the Selenium tests in a headless mode, with virtual "
+                "frames starting with the given index (eg. 1)"
+            ),
+            default=None,
+        )
+        parser.add_option(
+            '--driver-type',
+            help='The type of driver that needs to be created',
+            default='firefox',
+        )
+        parser.add_option(
+            '--remote-server-address',
+            help='Use a remote server to run the tests, must pass in the server address',  # noqa
+            default='localhost',
+        )
+        parser.add_option(
+            '--selenium-port',
+            help='The port for the selenium server',
+            default='4444',
+        )
+        parser.add_option(
+            '--track-stats',
+            help=(
+                'After the suite is run print a table of test '
+                'name/runtime/number of trips to the server.  defaults to '
+                'ordering by trips to the server'
+            ),
+            default=None,
+        )
         Plugin.options(self, parser, env)
 
     def configure(self, options, config):
@@ -43,7 +62,9 @@ class SeleniumPlugin(Plugin):
             self.ss_dir = os.path.abspath('failure_screenshots')
         valid_browsers = ['firefox', 'internet_explorer', 'chrome']
         if options.driver_type not in valid_browsers:
-            raise RuntimeError('--driver-type must be one of: %s' % ' '.join(valid_browsers))
+            raise RuntimeError(
+                '--driver-type must be one of: %s' % ' '.join(valid_browsers)
+            )
         self._driver_type = options.driver_type.replace('_', ' ')
         self._remote_server_address = options.remote_server_address
         self._selenium_port = options.selenium_port
@@ -55,7 +76,7 @@ class SeleniumPlugin(Plugin):
         if options.headless:
             self.run_headless = True
             self.x_display = int(options.headless)
-        if options.track_stats and options.track_stats not in ('trips', 'runtime'):
+        if options.track_stats and options.track_stats not in ('trips', 'runtime'):  # noqa
             raise RuntimeError('--track-stats must be "trips" or "runtime"')
         self._track_stats = options.track_stats
         Plugin.configure(self, options, config)
@@ -81,7 +102,10 @@ class SeleniumPlugin(Plugin):
             while current < timeout:
                 try:
                     self._driver = RemoteDriver(
-                        'http://%s:%s/wd/hub' % (self._remote_server_address, self._selenium_port),
+                        'http://%s:%s/wd/hub' % (
+                            self._remote_server_address,
+                            self._selenium_port,
+                        ),
                         self._driver_type,
                         'WINDOWS',
                     )
@@ -120,10 +144,30 @@ class SeleniumPlugin(Plugin):
         if self.run_headless:
             xvfb_display = self.x_display
             try:
-                self.xvfb_process = subprocess.Popen(['xvfb', ':%s' % xvfb_display, '-ac', '-screen', '0', '1024x768x24'], stderr=subprocess.PIPE)
+                self.xvfb_process = subprocess.Popen(
+                    [
+                        'xvfb',
+                        ':%s' % xvfb_display,
+                        '-ac',
+                        '-screen',
+                        '0',
+                        '1024x768x24',
+                    ],
+                    stderr=subprocess.PIPE,
+                )
             except OSError:
                 # Newer distros use Xvfb
-                self.xvfb_process = subprocess.Popen(['Xvfb', ':%s' % xvfb_display, '-ac', '-screen', '0', '1024x768x24'], stderr=subprocess.PIPE)
+                self.xvfb_process = subprocess.Popen(
+                    [
+                        'Xvfb',
+                        ':%s' % xvfb_display,
+                        '-ac',
+                        '-screen',
+                        '0',
+                        '1024x768x24',
+                    ],
+                    stderr=subprocess.PIPE,
+                )
             os.environ['DISPLAY'] = ':%s' % xvfb_display
 
     def beforeTest(self, test):
@@ -140,7 +184,11 @@ class SeleniumPlugin(Plugin):
         if not hasattr(self, 'times'):
             self.times = []
         if self.times and self._driver:
-            self.times.append((test.address()[2], int(time.time() - self.start_time), self._driver.roundtrip_counter))
+            self.times.append((
+                test.address()[2],
+                int(time.time() - self.start_time),
+                self._driver.roundtrip_counter
+            ))
             self._driver.roundtrip_counter = 0
         driver = getattr(test.test, 'driver', False)
         if not driver:
@@ -182,9 +230,11 @@ class SeleniumPlugin(Plugin):
         if hasattr(driver, 'save_screenshot'):
             driver.save_screenshot(ss_file)
 
+
 def monkey_patch_methods(driver):
     # Keep track of how many trips to execute are made
     old_execute = driver.__class__.execute
+
     def new_execute(self, *args, **kwargs):
         roundtrip_counter = getattr(driver, 'roundtrip_counter', 0)
         driver.roundtrip_counter = roundtrip_counter + 1
@@ -193,6 +243,7 @@ def monkey_patch_methods(driver):
 
     # If there is an alert when trying to get a page, accept it
     old_get = driver.__class__.get
+
     def new_get(self, *args, **kwargs):
         old_get(self, *args, **kwargs)
         accept_alert(driver)
@@ -201,16 +252,19 @@ def monkey_patch_methods(driver):
     # Need to move away from the page to ensure if there is an alert on the
     # page it gets dealt with prior to closing the window
     old_close = driver.__class__.close
+
     def new_close(self, *args, **kwargs):
-        self.get('www.google.com') # Random page to ensure page is changed
+        self.get('www.google.com')  # Random page to ensure page is changed
         old_close(self, *args, **kwargs)
     driver.__class__.close = new_close
 
     old_quit = driver.__class__.quit
+
     def new_quit(self, *args, **kwargs):
-        self.close() # Need to handle onbeforeunload alerts
+        self.close()  # Need to handle onbeforeunload alerts
         old_quit(self, *args, **kwargs)
     driver.__class__.quit = new_quit
+
 
 def accept_alert(driver):
     from selenium.common.exceptions import WebDriverException

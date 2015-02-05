@@ -3,10 +3,11 @@ import shutil
 
 from nosedjango.plugins.base_plugin import Plugin
 
+
 class FileStoragePlugin(Plugin):
     """
-    Set up a test file system so you're writing to a specific directory for your
-    testing.
+    Set up a test file system so you're writing to a specific directory for
+    your testing.
     """
     name = 'django-testfs'
 
@@ -18,7 +19,7 @@ class FileStoragePlugin(Plugin):
         testing without worrying about different processes interacting via
         the storage system.
         """
-        settings.DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+        settings.DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'  # noqa
         from django.core.files.storage import default_storage
 
         token = self.get_unique_token()

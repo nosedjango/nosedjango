@@ -11,6 +11,7 @@ import time
 
 from nosedjango.plugins.base_plugin import Plugin
 
+
 class SphinxSearchPlugin(Plugin):
     """
     Plugin for configuring and running a sphinx search process for djangosphinx
@@ -25,7 +26,6 @@ class SphinxSearchPlugin(Plugin):
         self.tmp_sphinx_dir = None
         self.sphinx_config_tpl = None
         self._searchd = None
-
 
     def options(self, parser, env=None):
         """
@@ -42,8 +42,10 @@ class SphinxSearchPlugin(Plugin):
         """
         if env is None:
             env = os.environ
-        parser.add_option('--sphinx-config-tpl',
-                          help='Path to the Sphinx configuration file template.')
+        parser.add_option(
+            '--sphinx-config-tpl',
+            help='Path to the Sphinx configuration file template.',
+        )
 
         super(SphinxSearchPlugin, self).options(parser, env)
 
@@ -53,7 +55,6 @@ class SphinxSearchPlugin(Plugin):
 
             # Create a directory for storing the configs, logs and index files
             self.tmp_sphinx_dir = tempfile.mkdtemp()
-
 
         super(SphinxSearchPlugin, self).configure(options, config)
 
@@ -69,13 +70,17 @@ class SphinxSearchPlugin(Plugin):
             if run_sphinx_searchd:
                 # Need to build the config
 
-                # Update the DjangoSphinx client to use the proper port and index
+                # Update the DjangoSphinx client to use the proper port and
+                # index
                 settings.SPHINX_PORT = self.searchd_port
                 from djangosphinx import models as dj_sphinx_models
                 dj_sphinx_models.SPHINX_PORT = self.searchd_port
 
                 # Generate the sphinx configuration file from the template
-                sphinx_config_path = os.path.join(self.tmp_sphinx_dir, 'sphinx.conf')
+                sphinx_config_path = os.path.join(
+                    self.tmp_sphinx_dir,
+                    'sphinx.conf',
+                )
 
                 db_dict = connection.settings_dict
                 with open(self.sphinx_config_tpl, 'r') as tpl_f:
@@ -95,7 +100,6 @@ class SphinxSearchPlugin(Plugin):
                         sphinx_conf_f.write(output)
                         sphinx_conf_f.flush()
 
-
             if build_sphinx_index:
                 self._build_sphinx_index(sphinx_config_path)
             if run_sphinx_searchd:
@@ -112,8 +116,16 @@ class SphinxSearchPlugin(Plugin):
         shutil.rmtree(self.tmp_sphinx_dir, ignore_errors=True)
 
     def _build_sphinx_index(self, config):
-        indexer = subprocess.Popen(['indexer', '--config', config, '--all'],
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        indexer = subprocess.Popen(
+            [
+                'indexer',
+                '--config',
+                config,
+                '--all',
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         if indexer.wait() != 0:
             print "Sphinx Indexing Problem"
             stdout, stderr = indexer.communicate()
@@ -127,8 +139,8 @@ class SphinxSearchPlugin(Plugin):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         returned = self._searchd.poll()
-        if returned != None:
-            print "Sphinx Search unavailable. searchd exited with code: %s" % returned
+        if returned is not None:
+            print "Sphinx Search unavailable. searchd exited with code: %s" % returned  # noqa
             stdout, stderr = self._searchd.communicate()
             print "stdout: %s" % stdout
             print "stderr: %s" % stderr
@@ -148,8 +160,8 @@ class SphinxSearchPlugin(Plugin):
             try:
                 af = socket.AF_INET
                 addr = ('127.0.0.1', port)
-                sock = socket.socket (af, socket.SOCK_STREAM)
-                sock.connect (addr)
+                sock = socket.socket(af, socket.SOCK_STREAM)
+                sock.connect(addr)
             except socket.error:
                 if sock:
                     sock.close()

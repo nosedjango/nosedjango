@@ -1,5 +1,6 @@
 from nosedjango.plugins.base_plugin import Plugin
 
+
 class SqlitePlugin(Plugin):
     """
     Modify django database settings to use an in-memory sqlite instance for
@@ -9,8 +10,8 @@ class SqlitePlugin(Plugin):
 
     def beforeConnectionSetup(self, settings):
         if hasattr(settings, 'DATABASES'):
-            settings.DATABASES['default']['ENGINE'] = 'django.db.backends.sqlite3'
-            settings.DATABASES['default']['NAME'] = '' # in-memory database
+            settings.DATABASES['default']['ENGINE'] = 'django.db.backends.sqlite3'  # noqa
+            settings.DATABASES['default']['NAME'] = ''  # in-memory database
             settings.DATABASES['default']['OPTIONS'] = {}
             settings.DATABASES['default']['USER'] = ''
             settings.DATABASES['default']['PASSWORD'] = ''
