@@ -388,43 +388,41 @@ class NoseDjango(Plugin):
         if isinstance(test, nose.case.Test):
             # Mirrors django.test.testcases:TestCase
 
-            if hasattr(test.context, 'fixtures'):
-                # We have to use this slightly awkward syntax due to the fact
-                # that we're using *args and **kwargs together.
-                ordered_fixtures = sorted(test.context.fixtures)
-                if ordered_fixtures != self._loaded_test_fixtures:
-                    # Only clear + load the fixtures if they're not already
-                    # loaded
+            fixtures_to_load = getattr(test.context, 'fixtures', [])
+            # We have to use this slightly awkward syntax due to the fact
+            # that we're using *args and **kwargs together.
+            ordered_fixtures = sorted(fixtures_to_load)
+            if ordered_fixtures != self._loaded_test_fixtures:
+                # Only clear + load the fixtures if they're not already
+                # loaded
 
-                    # Flush previous fixtures
+                # Flush previous fixtures
+                if use_transaction_isolation:
+                    self.restore_transaction_support(transaction)
+
+                self._flush_db()
+
+                if use_transaction_isolation:
+                    transaction.commit()
+                    self.disable_transaction_support(transaction)
+
+                # Load the new fixtures
+                logger.debug("Loading fixtures: %s", fixtures_to_load)
+                if fixtures_to_load:
+                    commit = True
                     if use_transaction_isolation:
-                        self.restore_transaction_support(transaction)
-
-                    self._flush_db()
-
-                    if use_transaction_isolation:
-                        transaction.commit()
-                        self.disable_transaction_support(transaction)
-
-                    # Load the new fixtures
-                    logger.debug("Loading fixtures: %s", test.context.fixtures)
-                    if use_transaction_isolation:
-                        call_command(
-                            'loaddata',
-                            *test.context.fixtures,
-                            **{'verbosity': 0, 'commit': False}
-                        )
-                        self.restore_transaction_support(transaction)
-                        transaction.commit()
-                        self.disable_transaction_support(transaction)
-                    else:
-                        call_command(
-                            'loaddata',
-                            *test.context.fixtures,
-                            **{'verbosity': 0}
-                        )
-                    self._num_fixture_loads += 1
-                    self._loaded_test_fixtures = ordered_fixtures
+                        commit = False
+                    call_command(
+                        'loaddata',
+                        *test.context.fixtures,
+                        **{'verbosity': 0, 'commit': commit}
+                    )
+                if use_transaction_isolation:
+                    self.restore_transaction_support(transaction)
+                    transaction.commit()
+                    self.disable_transaction_support(transaction)
+                self._num_fixture_loads += 1
+                self._loaded_test_fixtures = ordered_fixtures
         self.call_plugins_method('afterFixtureLoad', settings, test)
 
         self.call_plugins_method('beforeUrlConfLoad', settings, test)
