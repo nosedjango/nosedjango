@@ -5,9 +5,10 @@ from nosedjango.plugins.base_plugin import Plugin
 
 try:
     djkombu_installed = True
-    import djkombu
+    import djkombu  # noqa
 except ImportError:
     djkombu_installed = False
+
 
 class CeleryPlugin(Plugin):
     """
@@ -29,7 +30,11 @@ class CeleryPlugin(Plugin):
             dest='use_djkombu',
             action='store_true',
             default=False,
-            help='Use django-kombu for database-backed Celery. Alleviates the need to install rabbitmq.')
+            help=(
+                'Use django-kombu for database-backed Celery. Alleviates the '
+                'need to install rabbitmq.'
+            ),
+        )
 
         super(CeleryPlugin, self).options(parser, env)
 
@@ -38,7 +43,9 @@ class CeleryPlugin(Plugin):
 
         if self.use_djkombu and not djkombu_installed:
             # Trying to use django-kombu, but it's not actually installed
-            raise ConfigError("django-kombu must be installed in order to use --dbbacked-celery")
+            raise ConfigError(
+                "django-kombu must be installed in order to use --dbbacked-celery",  # noqa
+            )
 
         super(CeleryPlugin, self).configure(options, config)
 
