@@ -74,7 +74,7 @@ class NoseDjango(Plugin):
         self._num_flush_calls = 0
         self._num_syncdb_calls = 0
 
-        self.orig_commit = self.transaction.atomic
+        self.orig_commit = self.transaction.commit
         self.orig_rollback = self.transaction.rollback
         self.orig_savepoint_commit = self.transaction.savepoint_commit
         self.orig_savepoint_rollback = self.transaction.savepoint_rollback
@@ -84,13 +84,18 @@ class NoseDjango(Plugin):
     @property
     def transaction(self):
         from django.db import transaction
-        if not hasattr(transaction, 'atomic'):
-            transaction.atomic = transaction.commit
-        if not hasattr(transaction, 'set_autocommit'):
+        if self.django_version < 7:
             transaction.set_autocommit = lambda x: x
-        if not hasattr(transaction, 'get_autocommit'):
             transaction.get_autocommit = lambda: True
+        else:
+            transaction.enter_transaction_management = lambda: True
+            transaction.leave_transaction_management = lambda: True
         return transaction
+
+    @property
+    def django_version(self):
+        from django import VERSION
+        return VERSION[1]
 
     @contextmanager
     def set_autocommit(self, value):
@@ -100,7 +105,7 @@ class NoseDjango(Plugin):
         self.transaction.set_autocommit(old_value)
 
     def disable_transaction_support(self):
-        self.transaction.atomic = _dummy
+        self.transaction.commit = _dummy
         self.transaction.rollback = _dummy
         self.transaction.savepoint_commit = _dummy
         self.transaction.savepoint_rollback = _dummy
@@ -108,7 +113,7 @@ class NoseDjango(Plugin):
         self.transaction.leave_transaction_management = _dummy
 
     def restore_transaction_support(self):
-        self.transaction.atomic = self.orig_commit
+        self.transaction.commit = self.orig_commit
         self.transaction.rollback = self.orig_rollback
         self.transaction.savepoint_commit = self.orig_savepoint_commit
         self.transaction.savepoint_rollback = self.orig_savepoint_rollback
@@ -237,6 +242,8 @@ class NoseDjango(Plugin):
         test database won't be able to view data created/altered during the
         test.
         """
+        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':  # noqa
+            return True
         if not getattr(test.context, 'use_transaction_isolation', True):
             # The test explicitly says not to use transaction isolation
             return False
@@ -296,6 +303,7 @@ class NoseDjango(Plugin):
             teardown_test_environment()
 
             setup_test_environment()
+            return
             import django
             if hasattr(django, 'setup'):
                 django.setup()
@@ -304,10 +312,9 @@ class NoseDjango(Plugin):
 
             self.restore_transaction_support()
             if use_transaction_isolation:
-                self.transaction.atomic()
+                self.transaction.commit()
             if self.transaction_is_managed():
-                # transaction.leave_transaction_management()
-                pass
+                self.transaction.set_autocommit(False)
             # If connection is not closed Postgres can go wild with
             # character encodings.
             for connection in connections.all():
@@ -320,7 +327,11 @@ class NoseDjango(Plugin):
         if use_transaction_isolation:
             self.restore_transaction_support()
             logger.debug("Rolling back")
-            self.transaction.rollback()
+            if self.django_version > 7:
+                if not self.transaction_is_managed():
+                    self.transaction.rollback()
+            else:
+                self.transaction.rollback()
             if self.transaction_is_managed():
                 self.transaction.leave_transaction_management()
             # If connection is not closed Postgres can go wild with
@@ -339,59 +350,12 @@ class NoseDjango(Plugin):
         self.call_plugins_method('afterRollback', settings)
 
     def _flush_db(self):
-        from django import VERSION as DJANGO_VERSION
-        from django.conf import settings
         from django.core.management import call_command
-
-        with self.set_autocommit(True):
+        if self.django_version < 7:
+            with self.set_autocommit(True):
+                call_command('flush', verbosity=0, interactive=False)
+        else:
             call_command('flush', verbosity=0, interactive=False)
-
-        # In Django <1.2 Depending on the order of certain post-syncdb
-        # signals, ContentTypes can be removed accidentally. Manually delete
-        # and re-add all and recreate ContentTypes if we're using the
-        # contenttypes app
-        # See: http://code.djangoproject.com/ticket/9207
-        # See: http://code.djangoproject.com/ticket/7052
-        if DJANGO_VERSION[0] <= 1 and DJANGO_VERSION[1] < 2 \
-           and 'django.contrib.contenttypes' in settings.INSTALLED_APPS:
-            # TODO: Only mysql actually needs this
-            from django.contrib.contenttypes.models import ContentType
-            from django.contrib.contenttypes.management import (
-                update_all_contenttypes,
-            )
-            from django.db import models
-            from django.contrib.auth.management import create_permissions
-            from django.contrib.auth.models import Permission
-
-            ContentType.objects.all().delete()
-            ContentType.objects.clear_cache()
-            update_all_contenttypes(verbosity=0)
-
-            # Because of various ways of handling auto-increment, we need to
-            # make sure the new contenttypes start at 1
-            next_pk = 1
-            content_types = list(ContentType.objects.all().order_by('pk'))
-            ContentType.objects.all().delete()
-            for ct in content_types:
-                ct.pk = next_pk
-                ct.save()
-                next_pk += 1
-
-            # Because of the same problems with ContentTypes, we can get
-            # busted permissions
-            Permission.objects.all().delete()
-            for app in models.get_apps():
-                create_permissions(app=app, created_models=None, verbosity=0)
-
-            # Because of various ways of handling auto-increment, we need to
-            # make sure the new permissions start at 1
-            next_pk = 1
-            permissions = list(Permission.objects.all().order_by('pk'))
-            Permission.objects.all().delete()
-            for perm in permissions:
-                perm.pk = next_pk
-                perm.save()
-                next_pk += 1
 
         logger.debug("Flushing database")
         self._num_flush_calls += 1
@@ -420,9 +384,10 @@ class NoseDjango(Plugin):
                 settings,
                 test,
             )
-            self.transaction.enter_transaction_management()
-            self.transaction.managed(True)
-            self.disable_transaction_support()
+            if self.django_version < 7:
+                self.transaction.enter_transaction_management()
+                self.transaction.managed(True)
+                self.disable_transaction_support()
 
         Site.objects.clear_cache()
         # Otherwise django.contrib.auth.Permissions will depend on deleted
@@ -457,7 +422,8 @@ class NoseDjango(Plugin):
                 self._flush_db()
 
                 if use_transaction_isolation:
-                    self.transaction.atomic()
+                    if self.django_version < 7:
+                        self.transaction.commit()
                     self.disable_transaction_support()
 
                 # Load the new fixtures
@@ -473,7 +439,8 @@ class NoseDjango(Plugin):
                     )
                 if use_transaction_isolation:
                     self.restore_transaction_support()
-                    self.transaction.atomic()
+                    if self.django_version < 7:
+                        self.transaction.commit()
                     self.disable_transaction_support()
                 self._num_fixture_loads += 1
                 self._loaded_test_fixtures = ordered_fixtures
