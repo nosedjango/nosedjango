@@ -8,9 +8,7 @@ before_install:
     - sleep 3  # Give xvfb some time to start.
 env:
     - TOX_ENV=py26-nose1.3.X-django1.4.X
-    - TOX_ENV=py26-nose1.3.X-django1.6.X
     - TOX_ENV=py27-nose1.3.X-django1.4.X
-    - TOX_ENV=py27-nose1.3.X-django1.6.X
     - TOX_ENV=py27-nose1.3.X-django1.7.X
     - TOX_ENV=py27-nose1.3.X-django1.8.X
     - TOX_ENV=docs

@@ -88,6 +88,8 @@ class NoseDjango(Plugin):
         transaction.leave_transaction_management = _dummy
 
     def restore_transaction_support(self, transaction):
+        if not hasattr(self, 'orig_commit'):
+            return
         transaction.commit = self.orig_commit
         transaction.rollback = self.orig_rollback
         transaction.savepoint_commit = self.orig_savepoint_commit
@@ -182,11 +184,20 @@ class NoseDjango(Plugin):
                 'beforeTestSetup', settings, setup_test_environment,
                 connection)
         setup_test_environment()
+        import django
+        if hasattr(django, 'setup'):
+            django.setup()
+
         self.call_plugins_method('afterTestSetup', settings)
 
         management.get_commands()
         # Ensure that nothing (eg. South) steals away our syncdb command
-        management._commands['syncdb'] = 'django.core'
+        if hasattr(management, '_commands'):
+            management._commands['syncdb'] = 'django.core'
+        else:
+            pass
+            # assert 0, dir(management)
+            # management.commands['syncdb'] = 'django.core'
 
         for connection in connections.all():
             self.call_plugins_method(
@@ -208,6 +219,7 @@ class NoseDjango(Plugin):
         test database won't be able to view data created/altered during the
         test.
         """
+        return False
         if not getattr(test.context, 'use_transaction_isolation', True):
             # The test explicitly says not to use transaction isolation
             return False
@@ -389,6 +401,8 @@ class NoseDjango(Plugin):
             # Mirrors django.test.testcases:TestCase
 
             fixtures_to_load = getattr(test.context, 'fixtures', [])
+            if fixtures_to_load is None:
+                fixtures_to_load = []
             # We have to use this slightly awkward syntax due to the fact
             # that we're using *args and **kwargs together.
             ordered_fixtures = sorted(fixtures_to_load)

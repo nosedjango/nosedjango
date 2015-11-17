@@ -53,3 +53,7 @@ INSTALLED_APPS = (
 
     'nosedjangotests.polls',
 )
+
+SILENCED_SYSTEM_CHECKS = [
+    '1_6.W001',
+]
