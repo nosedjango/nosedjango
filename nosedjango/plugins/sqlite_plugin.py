@@ -15,9 +15,11 @@ class SqlitePlugin(Plugin):
             settings.DATABASES['default']['OPTIONS'] = {}
             settings.DATABASES['default']['USER'] = ''
             settings.DATABASES['default']['PASSWORD'] = ''
+            settings.DATABASES['default']['ATOMIC_REQUESTS'] = True
         else:
             settings.DATABASE_ENGINE = 'sqlite3'
             settings.DATABASE_NAME = ''
             settings.DATABASE_OPTIONS = {}
             settings.DATABASE_USER = ''
             settings.DATABASE_PASSWORD = ''
+            settings.DATABASE_ATOMIC_REQUESTS = True
