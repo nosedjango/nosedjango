@@ -121,6 +121,8 @@ class RunTests(Command):
         except ImportError:
             print "Selenium not installed. Skipping tests."
             # No Selenium
+        # TODO Faster tests.
+        selenium_installed = False
         if selenium_installed:
             print "Running tests using selenium. (will fail if mysql not configured)"  # noqa
             print "This will fail if mysql isn't configured"
