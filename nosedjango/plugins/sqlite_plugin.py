@@ -14,5 +14,3 @@ class SqlitePlugin(Plugin):
         settings.DATABASES['default']['OPTIONS'] = {}
         settings.DATABASES['default']['USER'] = ''
         settings.DATABASES['default']['PASSWORD'] = ''
-        settings.DATABASES['default']['ATOMIC_REQUESTS'] = True
-        settings.DATABASES['default']['AUTOCOMMIT'] = True
