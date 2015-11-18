@@ -324,12 +324,11 @@ class NoseDjango(Plugin):
             teardown_test_environment()
 
             setup_test_environment()
-            return
-            import django
-            if hasattr(django, 'setup'):
-                django.setup()
             for connection in connections.all():
-                connection.creation.create_test_db(verbosity=self.verbosity)
+                with self.set_autocommit(True):
+                    connection.creation.create_test_db(
+                        verbosity=self.verbosity,
+                    )
 
             self.restore_transaction_support()
             if use_transaction_isolation:
