@@ -41,18 +41,6 @@ class RunTests(Command):
         ]
         test_results.append(TestProgram(argv=args, exit=False))
 
-        print "Running tests with with legacy DB setup"
-        args = [
-            '-v',
-            '--verbosity=2',
-            '--with-doctest',
-            '--with-django',
-            '--django-settings', 'nosedjangotests.settings_legacy',
-            '--with-django-sqlite',
-            'nosedjangotests.polls',
-        ]
-        test_results.append(TestProgram(argv=args, exit=False))
-
         print "Running tests multiprocess"
         args = [
             '-v',
