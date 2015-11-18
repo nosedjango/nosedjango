@@ -271,9 +271,9 @@ class NoseDjango(Plugin):
         if self.transaction_is_managed():
             return use_transaction_isolation
         if use_transaction_isolation:
-            self.transaction.set_autocommit(True)
-        else:
             self.transaction.set_autocommit(False)
+        else:
+            self.transaction.set_autocommit(True)
         return use_transaction_isolation
 
     def _should_rebuild_schema(self, test):
