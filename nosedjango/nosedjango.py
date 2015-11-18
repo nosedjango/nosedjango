@@ -52,6 +52,11 @@ def _dummy(*args, **kwargs):
     return
 
 
+@contextmanager
+def _dummy_context_manager(*args, **kwargs):
+    yield
+
+
 class NoseDjango(Plugin):
     """
     Enable to set up django test environment before running all tests, and
@@ -80,6 +85,11 @@ class NoseDjango(Plugin):
         self.orig_savepoint_rollback = self.transaction.savepoint_rollback
         self.orig_enter = self.transaction.enter_transaction_management
         self.orig_leave = self.transaction.leave_transaction_management
+        if self.django_version > 6:
+            self.orig_atomic = self.transaction.atomic
+
+    def __del__(self):
+        self.restore_transaction_support()
 
     @property
     def transaction(self):
@@ -117,6 +127,8 @@ class NoseDjango(Plugin):
         self.transaction.savepoint_rollback = _dummy
         self.transaction.enter_transaction_management = _dummy
         self.transaction.leave_transaction_management = _dummy
+        if self.django_version > 6:
+            self.transaction.atomic = _dummy_context_manager
 
     def restore_transaction_support(self):
         self.transaction.commit = self.orig_commit
@@ -125,6 +137,8 @@ class NoseDjango(Plugin):
         self.transaction.savepoint_rollback = self.orig_savepoint_rollback
         self.transaction.enter_transaction_management = self.orig_enter
         self.transaction.leave_transaction_management = self.orig_leave
+        if self.django_version > 6:
+            self.transaction.atomic = self.orig_atomic
 
     def options(self, parser, env):
         parser.add_option(
@@ -231,7 +245,8 @@ class NoseDjango(Plugin):
         for connection in connections.all():
             self.call_plugins_method(
                 'beforeTestDb', settings, connection, management)
-            connection.creation.create_test_db(verbosity=self.verbosity)
+            with self.set_autocommit(True):
+                connection.creation.create_test_db(verbosity=self.verbosity)
             logger.debug("Running syncdb")
             self._num_syncdb_calls += 1
             self.call_plugins_method('afterTestDb', settings, connection)
