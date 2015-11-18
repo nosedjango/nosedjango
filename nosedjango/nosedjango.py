@@ -104,6 +104,12 @@ class NoseDjango(Plugin):
         yield
         self.transaction.set_autocommit(old_value)
 
+    def commit(self):
+        self.transaction.commit()
+
+    def rollback(self):
+        self.transaction.rollback()
+
     def disable_transaction_support(self):
         self.transaction.commit = _dummy
         self.transaction.rollback = _dummy
@@ -312,7 +318,7 @@ class NoseDjango(Plugin):
 
             self.restore_transaction_support()
             if use_transaction_isolation:
-                self.transaction.commit()
+                self.commit()
             if self.transaction_is_managed():
                 self.transaction.set_autocommit(False)
             # If connection is not closed Postgres can go wild with
@@ -327,11 +333,11 @@ class NoseDjango(Plugin):
         if use_transaction_isolation:
             self.restore_transaction_support()
             logger.debug("Rolling back")
-            if self.django_version > 7:
+            if self.django_version > 8:
                 if not self.transaction_is_managed():
-                    self.transaction.rollback()
+                    self.rollback()
             else:
-                self.transaction.rollback()
+                self.rollback()
             if self.transaction_is_managed():
                 self.transaction.leave_transaction_management()
             # If connection is not closed Postgres can go wild with
@@ -424,7 +430,7 @@ class NoseDjango(Plugin):
 
                 if use_transaction_isolation:
                     if self.django_version < 8:
-                        self.transaction.commit()
+                        self.commit()
                     self.disable_transaction_support()
 
                 # Load the new fixtures
@@ -441,7 +447,7 @@ class NoseDjango(Plugin):
                 if use_transaction_isolation:
                     self.restore_transaction_support()
                     if self.django_version < 8:
-                        self.transaction.commit()
+                        self.commit()
                     self.disable_transaction_support()
                 self._num_fixture_loads += 1
                 self._loaded_test_fixtures = ordered_fixtures
