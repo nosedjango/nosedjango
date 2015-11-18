@@ -473,6 +473,8 @@ class NoseDjango(Plugin):
             settings.ROOT_URLCONF = test.context.urls
             clear_url_caches()
         self.call_plugins_method('afterUrlConfLoad', settings, test)
+        if self.django_version > 7:
+            self.disable_transaction_support()
 
     def finalize(self, result=None):
         """
