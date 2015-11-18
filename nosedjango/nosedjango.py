@@ -372,10 +372,7 @@ class NoseDjango(Plugin):
 
     def _flush_db(self):
         from django.core.management import call_command
-        if self.django_version < 8:
-            with self.set_autocommit(True):
-                call_command('flush', verbosity=0, interactive=False)
-        else:
+        with self.set_autocommit(True):
             call_command('flush', verbosity=0, interactive=False)
 
         logger.debug("Flushing database")
@@ -527,6 +524,15 @@ class NoseDjango(Plugin):
             '_fixture_teardown',
             '_urlconf_teardown',
         ]
+        override_class_methods = [
+            'setUpClass',
+            'tearDownClass',
+        ]
+
+        @classmethod
+        def _dummy_class_method(*args, **kwargs):
+            pass
+
         for override in overrides:
             setattr(
                 django.test.testcases.TransactionTestCase,
@@ -534,6 +540,18 @@ class NoseDjango(Plugin):
                 _dummy,
             )
             setattr(django.test.testcases.TestCase, override, _dummy)
+
+        for override in override_class_methods:
+            setattr(
+                django.test.testcases.TransactionTestCase,
+                override,
+                _dummy_class_method,
+            )
+            setattr(
+                django.test.testcases.TestCase,
+                override,
+                _dummy_class_method,
+            )
 
         setattr(
             django.test.testcases.TransactionTestCase,
