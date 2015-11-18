@@ -263,8 +263,6 @@ class NoseDjango(Plugin):
         test database won't be able to view data created/altered during the
         test.
         """
-        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':  # noqa
-            return True
         if not getattr(test.context, 'use_transaction_isolation', True):
             # The test explicitly says not to use transaction isolation
             return False
