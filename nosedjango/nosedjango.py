@@ -79,15 +79,6 @@ class NoseDjango(Plugin):
         self._num_flush_calls = 0
         self._num_syncdb_calls = 0
 
-        self.orig_commit = self.transaction.commit
-        self.orig_rollback = self.transaction.rollback
-        self.orig_savepoint_commit = self.transaction.savepoint_commit
-        self.orig_savepoint_rollback = self.transaction.savepoint_rollback
-        self.orig_enter = self.transaction.enter_transaction_management
-        self.orig_leave = self.transaction.leave_transaction_management
-        if self.django_version > 6:
-            self.orig_atomic = self.transaction.atomic
-
     def __del__(self):
         self.restore_transaction_support()
 
@@ -119,6 +110,16 @@ class NoseDjango(Plugin):
 
     def rollback(self):
         self.transaction.rollback()
+
+    def store_original_transaction_methods(self):
+        self.orig_commit = self.transaction.commit
+        self.orig_rollback = self.transaction.rollback
+        self.orig_savepoint_commit = self.transaction.savepoint_commit
+        self.orig_savepoint_rollback = self.transaction.savepoint_rollback
+        self.orig_enter = self.transaction.enter_transaction_management
+        self.orig_leave = self.transaction.leave_transaction_management
+        if self.django_version > 6:
+            self.orig_atomic = self.transaction.atomic
 
     def disable_transaction_support(self):
         self.transaction.commit = _dummy
@@ -250,6 +251,7 @@ class NoseDjango(Plugin):
             logger.debug("Running syncdb")
             self._num_syncdb_calls += 1
             self.call_plugins_method('afterTestDb', settings, connection)
+        self.store_original_transaction_methods()
 
     def _should_use_transaction_isolation(self, test, settings):
         """
