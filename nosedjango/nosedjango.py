@@ -78,6 +78,7 @@ class NoseDjango(Plugin):
         self._num_fixture_loads = 0
         self._num_flush_calls = 0
         self._num_syncdb_calls = 0
+        self.save_point = None
 
     def __del__(self):
         self.restore_transaction_support()
@@ -86,11 +87,12 @@ class NoseDjango(Plugin):
     def transaction(self):
         from django.db import transaction
         if self.django_version < 7:
-            transaction.set_autocommit = lambda x: x
-            transaction.get_autocommit = lambda: True
+            transaction.set_autocommit = _dummy
+            transaction.get_autocommit = _dummy
         elif self.django_version > 7:
-            transaction.enter_transaction_management = lambda: True
-            transaction.leave_transaction_management = lambda: True
+            transaction.enter_transaction_management = _dummy
+            transaction.leave_transaction_management = _dummy
+            transaction.managed = _dummy
         return transaction
 
     @property
@@ -106,10 +108,16 @@ class NoseDjango(Plugin):
         self.transaction.set_autocommit(old_value)
 
     def commit(self):
-        self.transaction.commit()
+        if self.django_version > 7:
+            self.save_point = self.transaction.savepoint()
+        else:
+            self.transaction.commit()
 
     def rollback(self):
-        self.transaction.rollback()
+        if self.django_version > 7:
+            self.transaction.savepoint_rollback(self.save_point)
+        else:
+            self.transaction.rollback()
 
     def store_original_transaction_methods(self):
         self.orig_commit = self.transaction.commit
@@ -347,11 +355,7 @@ class NoseDjango(Plugin):
         if use_transaction_isolation:
             self.restore_transaction_support()
             logger.debug("Rolling back")
-            if self.django_version > 8:
-                if not self.transaction_is_managed():
-                    self.rollback()
-            else:
-                self.rollback()
+            self.rollback()
             if self.transaction_is_managed():
                 self.transaction.leave_transaction_management()
             # If connection is not closed Postgres can go wild with
@@ -401,11 +405,10 @@ class NoseDjango(Plugin):
                 settings,
                 test,
             )
-            if self.django_version < 8:
-                with self.set_autocommit(True):
-                    self.transaction.enter_transaction_management()
-                    self.transaction.managed(True)
-                    self.disable_transaction_support()
+            with self.set_autocommit(True):
+                self.transaction.enter_transaction_management()
+                self.transaction.managed(True)
+                self.disable_transaction_support()
 
         Site.objects.clear_cache()
         # Otherwise django.contrib.auth.Permissions will depend on deleted
@@ -440,8 +443,7 @@ class NoseDjango(Plugin):
                 self._flush_db()
 
                 if use_transaction_isolation:
-                    if self.django_version < 8:
-                        self.commit()
+                    self.commit()
                     self.disable_transaction_support()
 
                 # Load the new fixtures
@@ -457,8 +459,7 @@ class NoseDjango(Plugin):
                     )
                 if use_transaction_isolation:
                     self.restore_transaction_support()
-                    if self.django_version < 8:
-                        self.commit()
+                    self.commit()
                     self.disable_transaction_support()
                 self._num_fixture_loads += 1
                 self._loaded_test_fixtures = ordered_fixtures
