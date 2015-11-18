@@ -87,7 +87,7 @@ class NoseDjango(Plugin):
         if self.django_version < 7:
             transaction.set_autocommit = lambda x: x
             transaction.get_autocommit = lambda: True
-        else:
+        elif self.django_version > 7:
             transaction.enter_transaction_management = lambda: True
             transaction.leave_transaction_management = lambda: True
         return transaction
@@ -351,7 +351,7 @@ class NoseDjango(Plugin):
 
     def _flush_db(self):
         from django.core.management import call_command
-        if self.django_version < 7:
+        if self.django_version < 8:
             with self.set_autocommit(True):
                 call_command('flush', verbosity=0, interactive=False)
         else:
@@ -384,10 +384,11 @@ class NoseDjango(Plugin):
                 settings,
                 test,
             )
-            if self.django_version < 7:
-                self.transaction.enter_transaction_management()
-                self.transaction.managed(True)
-                self.disable_transaction_support()
+            if self.django_version < 8:
+                with self.set_autocommit(True):
+                    self.transaction.enter_transaction_management()
+                    self.transaction.managed(True)
+                    self.disable_transaction_support()
 
         Site.objects.clear_cache()
         # Otherwise django.contrib.auth.Permissions will depend on deleted
@@ -422,7 +423,7 @@ class NoseDjango(Plugin):
                 self._flush_db()
 
                 if use_transaction_isolation:
-                    if self.django_version < 7:
+                    if self.django_version < 8:
                         self.transaction.commit()
                     self.disable_transaction_support()
 
@@ -439,7 +440,7 @@ class NoseDjango(Plugin):
                     )
                 if use_transaction_isolation:
                     self.restore_transaction_support()
-                    if self.django_version < 7:
+                    if self.django_version < 8:
                         self.transaction.commit()
                     self.disable_transaction_support()
                 self._num_fixture_loads += 1
