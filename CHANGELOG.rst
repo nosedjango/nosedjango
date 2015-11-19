@@ -1,3 +1,11 @@
+1.0.1b1
+-------
+
+released 2015-11-19
+
+* We now support django 1.7 and django 1.8.
+* Fixed an issue with the mail outbox not being cleared between tests.
+
 1.0.0b1
 -------
 
