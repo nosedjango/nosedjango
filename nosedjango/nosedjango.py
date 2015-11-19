@@ -11,6 +11,8 @@ import os
 import re
 import sys
 
+from contextlib import contextmanager
+
 import nose.case
 from nose.plugins import Plugin
 
@@ -50,6 +52,11 @@ def _dummy(*args, **kwargs):
     return
 
 
+@contextmanager
+def _dummy_context_manager(*args, **kwargs):
+    yield
+
+
 class NoseDjango(Plugin):
     """
     Enable to set up django test environment before running all tests, and
@@ -62,6 +69,10 @@ class NoseDjango(Plugin):
     """
     name = 'django'
 
+    DJANGO_1_4 = (1, 4)
+    DJANGO_1_7 = (1, 7)
+    DJANGO_1_8 = (1, 8)
+
     def __init__(self):
         Plugin.__init__(self)
         self.nose_config = None
@@ -72,28 +83,68 @@ class NoseDjango(Plugin):
         self._num_flush_calls = 0
         self._num_syncdb_calls = 0
 
-    def disable_transaction_support(self, transaction):
-        self.orig_commit = transaction.commit
-        self.orig_rollback = transaction.rollback
-        self.orig_savepoint_commit = transaction.savepoint_commit
-        self.orig_savepoint_rollback = transaction.savepoint_rollback
-        self.orig_enter = transaction.enter_transaction_management
-        self.orig_leave = transaction.leave_transaction_management
+    def __del__(self):
+        self.restore_transaction_support()
 
-        transaction.commit = _dummy
-        transaction.rollback = _dummy
-        transaction.savepoint_commit = _dummy
-        transaction.savepoint_rollback = _dummy
-        transaction.enter_transaction_management = _dummy
-        transaction.leave_transaction_management = _dummy
+    @property
+    def transaction(self):
+        from django.db import transaction
+        if self.django_version < self.DJANGO_1_7:
+            transaction.set_autocommit = _dummy
+            transaction.get_autocommit = _dummy
+        elif self.django_version > self.DJANGO_1_7:
+            transaction.enter_transaction_management = _dummy
+            transaction.leave_transaction_management = _dummy
+            transaction.managed = _dummy
+        return transaction
 
-    def restore_transaction_support(self, transaction):
-        transaction.commit = self.orig_commit
-        transaction.rollback = self.orig_rollback
-        transaction.savepoint_commit = self.orig_savepoint_commit
-        transaction.savepoint_rollback = self.orig_savepoint_rollback
-        transaction.enter_transaction_management = self.orig_enter
-        transaction.leave_transaction_management = self.orig_leave
+    @property
+    def django_version(self):
+        from django import VERSION
+        return VERSION
+
+    @contextmanager
+    def set_autocommit(self, value):
+        old_value = self.transaction.get_autocommit()
+        self.transaction.set_autocommit(value)
+        yield
+        self.transaction.set_autocommit(old_value)
+
+    def commit(self):
+        self.transaction.commit()
+
+    def rollback(self):
+        self.transaction.rollback()
+
+    def store_original_transaction_methods(self):
+        self.orig_commit = self.transaction.commit
+        self.orig_rollback = self.transaction.rollback
+        self.orig_savepoint_commit = self.transaction.savepoint_commit
+        self.orig_savepoint_rollback = self.transaction.savepoint_rollback
+        self.orig_enter = self.transaction.enter_transaction_management
+        self.orig_leave = self.transaction.leave_transaction_management
+        if self.django_version > self.DJANGO_1_7:
+            self.orig_atomic = self.transaction.atomic
+
+    def disable_transaction_support(self):
+        self.transaction.commit = _dummy
+        self.transaction.rollback = _dummy
+        self.transaction.savepoint_commit = _dummy
+        self.transaction.savepoint_rollback = _dummy
+        self.transaction.enter_transaction_management = _dummy
+        self.transaction.leave_transaction_management = _dummy
+        if self.django_version > self.DJANGO_1_7:
+            self.transaction.atomic = _dummy_context_manager
+
+    def restore_transaction_support(self):
+        self.transaction.commit = self.orig_commit
+        self.transaction.rollback = self.orig_rollback
+        self.transaction.savepoint_commit = self.orig_savepoint_commit
+        self.transaction.savepoint_rollback = self.orig_savepoint_rollback
+        self.transaction.enter_transaction_management = self.orig_enter
+        self.transaction.leave_transaction_management = self.orig_leave
+        if self.django_version > self.DJANGO_1_7:
+            self.transaction.atomic = self.orig_atomic
 
     def options(self, parser, env):
         parser.add_option(
@@ -182,19 +233,27 @@ class NoseDjango(Plugin):
                 'beforeTestSetup', settings, setup_test_environment,
                 connection)
         setup_test_environment()
+        import django
+        if hasattr(django, 'setup'):
+            django.setup()
+
         self.call_plugins_method('afterTestSetup', settings)
 
         management.get_commands()
         # Ensure that nothing (eg. South) steals away our syncdb command
-        management._commands['syncdb'] = 'django.core'
+        if hasattr(management, '_commands'):
+            management._commands['syncdb'] = 'django.core'
+        # TODO deal with this for django > 1.4
 
         for connection in connections.all():
             self.call_plugins_method(
                 'beforeTestDb', settings, connection, management)
-            connection.creation.create_test_db(verbosity=self.verbosity)
+            with self.set_autocommit(True):
+                connection.creation.create_test_db(verbosity=self.verbosity)
             logger.debug("Running syncdb")
             self._num_syncdb_calls += 1
             self.call_plugins_method('afterTestDb', settings, connection)
+        self.store_original_transaction_methods()
 
     def _should_use_transaction_isolation(self, test, settings):
         """
@@ -221,10 +280,28 @@ class NoseDjango(Plugin):
 
         return True
 
+    def should_use_transaction_isolation(self, test, settings):
+        use_transaction_isolation = self._should_use_transaction_isolation(
+            test=test,
+            settings=settings,
+        )
+        if self.transaction_is_managed():
+            return use_transaction_isolation
+        if use_transaction_isolation:
+            self.transaction.set_autocommit(False)
+        else:
+            self.transaction.set_autocommit(True)
+        return use_transaction_isolation
+
     def _should_rebuild_schema(self, test):
         if getattr(test.context, 'rebuild_schema', False):
             return True
         return False
+
+    def transaction_is_managed(self):
+        if hasattr(self.transaction, 'is_managed'):
+            return self.transaction.is_managed()
+        return self.transaction.get_connection().in_atomic_block
 
     def afterTest(self, test):
         """
@@ -232,7 +309,7 @@ class NoseDjango(Plugin):
         """
         # Restore transaction support on tests
         from django.conf import settings
-        from django.db import connections, transaction
+        from django.db import connections
         from django.test.utils import (
             setup_test_environment,
             teardown_test_environment,
@@ -240,7 +317,7 @@ class NoseDjango(Plugin):
         from django.core import mail
         mail.outbox = []
 
-        use_transaction_isolation = self._should_use_transaction_isolation(
+        use_transaction_isolation = self.should_use_transaction_isolation(
             test, settings)
 
         if self._should_rebuild_schema(test):
@@ -252,12 +329,16 @@ class NoseDjango(Plugin):
 
             setup_test_environment()
             for connection in connections.all():
-                connection.creation.create_test_db(verbosity=self.verbosity)
+                with self.set_autocommit(True):
+                    connection.creation.create_test_db(
+                        verbosity=self.verbosity,
+                    )
 
-            self.restore_transaction_support(transaction)
-            transaction.commit()
-            if transaction.is_managed():
-                transaction.leave_transaction_management()
+            self.restore_transaction_support()
+            if use_transaction_isolation:
+                self.commit()
+            if self.transaction_is_managed():
+                self.transaction.set_autocommit(False)
             # If connection is not closed Postgres can go wild with
             # character encodings.
             for connection in connections.all():
@@ -268,11 +349,11 @@ class NoseDjango(Plugin):
             return
 
         if use_transaction_isolation:
-            self.restore_transaction_support(transaction)
+            self.restore_transaction_support()
             logger.debug("Rolling back")
-            transaction.rollback()
-            if transaction.is_managed():
-                transaction.leave_transaction_management()
+            self.rollback()
+            if self.transaction_is_managed():
+                self.transaction.leave_transaction_management()
             # If connection is not closed Postgres can go wild with
             # character encodings.
             for connection in connections.all():
@@ -289,58 +370,9 @@ class NoseDjango(Plugin):
         self.call_plugins_method('afterRollback', settings)
 
     def _flush_db(self):
-        from django import VERSION as DJANGO_VERSION
-        from django.conf import settings
         from django.core.management import call_command
-
-        call_command('flush', verbosity=0, interactive=False)
-
-        # In Django <1.2 Depending on the order of certain post-syncdb
-        # signals, ContentTypes can be removed accidentally. Manually delete
-        # and re-add all and recreate ContentTypes if we're using the
-        # contenttypes app
-        # See: http://code.djangoproject.com/ticket/9207
-        # See: http://code.djangoproject.com/ticket/7052
-        if DJANGO_VERSION[0] <= 1 and DJANGO_VERSION[1] < 2 \
-           and 'django.contrib.contenttypes' in settings.INSTALLED_APPS:
-            # TODO: Only mysql actually needs this
-            from django.contrib.contenttypes.models import ContentType
-            from django.contrib.contenttypes.management import (
-                update_all_contenttypes,
-            )
-            from django.db import models
-            from django.contrib.auth.management import create_permissions
-            from django.contrib.auth.models import Permission
-
-            ContentType.objects.all().delete()
-            ContentType.objects.clear_cache()
-            update_all_contenttypes(verbosity=0)
-
-            # Because of various ways of handling auto-increment, we need to
-            # make sure the new contenttypes start at 1
-            next_pk = 1
-            content_types = list(ContentType.objects.all().order_by('pk'))
-            ContentType.objects.all().delete()
-            for ct in content_types:
-                ct.pk = next_pk
-                ct.save()
-                next_pk += 1
-
-            # Because of the same problems with ContentTypes, we can get
-            # busted permissions
-            Permission.objects.all().delete()
-            for app in models.get_apps():
-                create_permissions(app=app, created_models=None, verbosity=0)
-
-            # Because of various ways of handling auto-increment, we need to
-            # make sure the new permissions start at 1
-            next_pk = 1
-            permissions = list(Permission.objects.all().order_by('pk'))
-            Permission.objects.all().delete()
-            for perm in permissions:
-                perm.pk = next_pk
-                perm.save()
-                next_pk += 1
+        with self.set_autocommit(True):
+            call_command('flush', verbosity=0, interactive=False)
 
         logger.debug("Flushing database")
         self._num_flush_calls += 1
@@ -359,9 +391,8 @@ class NoseDjango(Plugin):
         from django.core.management import call_command
         from django.core.urlresolvers import clear_url_caches
         from django.conf import settings
-        from django.db import transaction
 
-        use_transaction_isolation = self._should_use_transaction_isolation(
+        use_transaction_isolation = self.should_use_transaction_isolation(
             test, settings)
 
         if use_transaction_isolation:
@@ -370,9 +401,10 @@ class NoseDjango(Plugin):
                 settings,
                 test,
             )
-            transaction.enter_transaction_management()
-            transaction.managed(True)
-            self.disable_transaction_support(transaction)
+            with self.set_autocommit(True):
+                self.transaction.enter_transaction_management()
+                self.transaction.managed(True)
+                self.disable_transaction_support()
 
         Site.objects.clear_cache()
         # Otherwise django.contrib.auth.Permissions will depend on deleted
@@ -391,6 +423,8 @@ class NoseDjango(Plugin):
             # Mirrors django.test.testcases:TestCase
 
             fixtures_to_load = getattr(test.context, 'fixtures', [])
+            if fixtures_to_load is None:
+                fixtures_to_load = []
             # We have to use this slightly awkward syntax due to the fact
             # that we're using *args and **kwargs together.
             ordered_fixtures = sorted(fixtures_to_load)
@@ -400,13 +434,13 @@ class NoseDjango(Plugin):
 
                 # Flush previous fixtures
                 if use_transaction_isolation:
-                    self.restore_transaction_support(transaction)
+                    self.restore_transaction_support()
 
                 self._flush_db()
 
                 if use_transaction_isolation:
-                    transaction.commit()
-                    self.disable_transaction_support(transaction)
+                    self.commit()
+                    self.disable_transaction_support()
 
                 # Load the new fixtures
                 logger.debug("Loading fixtures: %s", fixtures_to_load)
@@ -420,9 +454,9 @@ class NoseDjango(Plugin):
                         **{'verbosity': 0, 'commit': commit}
                     )
                 if use_transaction_isolation:
-                    self.restore_transaction_support(transaction)
-                    transaction.commit()
-                    self.disable_transaction_support(transaction)
+                    self.restore_transaction_support()
+                    self.commit()
+                    self.disable_transaction_support()
                 self._num_fixture_loads += 1
                 self._loaded_test_fixtures = ordered_fixtures
         self.call_plugins_method('afterFixtureLoad', settings, test)
@@ -436,6 +470,8 @@ class NoseDjango(Plugin):
             settings.ROOT_URLCONF = test.context.urls
             clear_url_caches()
         self.call_plugins_method('afterUrlConfLoad', settings, test)
+        if self.django_version > self.DJANGO_1_7:
+            self.disable_transaction_support()
 
     def finalize(self, result=None):
         """
@@ -486,6 +522,15 @@ class NoseDjango(Plugin):
             '_fixture_teardown',
             '_urlconf_teardown',
         ]
+        override_class_methods = [
+            'setUpClass',
+            'tearDownClass',
+        ]
+
+        @classmethod
+        def _dummy_class_method(*args, **kwargs):
+            pass
+
         for override in overrides:
             setattr(
                 django.test.testcases.TransactionTestCase,
@@ -493,6 +538,18 @@ class NoseDjango(Plugin):
                 _dummy,
             )
             setattr(django.test.testcases.TestCase, override, _dummy)
+
+        for override in override_class_methods:
+            setattr(
+                django.test.testcases.TransactionTestCase,
+                override,
+                _dummy_class_method,
+            )
+            setattr(
+                django.test.testcases.TestCase,
+                override,
+                _dummy_class_method,
+            )
 
         setattr(
             django.test.testcases.TransactionTestCase,

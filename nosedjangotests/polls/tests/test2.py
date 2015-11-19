@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.test import TestCase
 
 from nosedjangotests.polls.models import Poll
@@ -39,15 +38,18 @@ class AltersBleed1TestCase(TestCase):
     fixtures = ['polls1.json']
     rebuild_schema = True
 
-    def test_db_alteration(self):
-        if (
-                hasattr(settings, 'DATABASES') and settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql'  # noqa
-        ) or (
-                hasattr(settings, 'DATABASE_NAME') and settings.DATABASE_NAME == 'mysql'  # noqa
-        ):
-            from django.db import connection
-            cursor = connection.cursor()
-            cursor.execute('ALTER TABLE `polls_poll` CHANGE COLUMN `question` `question` varchar(201) COLLATE utf8_unicode_ci NOT NULL')  # noqa
+    # This test must run first
+    def test_aaa_db_alteration(self):
+        # Alter the table in a sufficient fashion that if the schema was not
+        # rebuilt, it would cause problems for future tests.
+        from django.db import connection
+        cursor = connection.cursor()
+        cursor.execute('DROP TABLE `polls_poll`')
+
+    # This test must run second.
+    def test_zzz_db_was_rebuilt(self):
+        # Ensure the schema was rebuilt by querying on the Poll Table
+        self.assertNotEqual(Poll.objects.count(), 0)
 
 
 class AltersBleed2TestCase(TestCase):

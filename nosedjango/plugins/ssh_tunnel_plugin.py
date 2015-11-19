@@ -5,23 +5,31 @@ import signal
 
 from nosedjango.plugins.base_plugin import Plugin
 
+
 class SshTunnelPlugin(Plugin):
     name = 'sshtunnel'
 
     def options(self, parser, env=None):
         if env is None:
             env = os.environ
-        parser.add_option('--remote-server',
-                          help='Use a remote server to run the tests, must pass in the server address',
-                          )
-        parser.add_option('--to-from-ports',
-                          help='Should be of the form x:y where x is the port that needs to be forwarded to the server and y is the port that the server needs forwarded back to the localhost',
-                          default='4444:8001',
-                          )
-        parser.add_option('--username',
-                          help='The username with which to create the ssh tunnel to the remote server',
-                          default=None,
-                          )
+        parser.add_option(
+            '--remote-server',
+            help='Use a remote server to run the tests, must pass in the server address',  # noqa
+        )
+        parser.add_option(
+            '--to-from-ports',
+            help=(
+                'Should be of the form x:y where x is the port that needs to '
+                'be forwarded to the server and y is the port that the server '
+                'needs forwarded back to the localhost'
+            ),
+            default='4444:8001',
+        )
+        parser.add_option(
+            '--username',
+            help='The username with which to create the ssh tunnel to the remote server',  # noqa
+            default=None,
+        )
         Plugin.options(self, parser, env)
 
     def configure(self, options, config):
