@@ -78,7 +78,6 @@ class NoseDjango(Plugin):
         self._num_fixture_loads = 0
         self._num_flush_calls = 0
         self._num_syncdb_calls = 0
-        self.save_point = None
 
     def __del__(self):
         self.restore_transaction_support()
