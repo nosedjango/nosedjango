@@ -239,10 +239,7 @@ class NoseDjango(Plugin):
         # Ensure that nothing (eg. South) steals away our syncdb command
         if hasattr(management, '_commands'):
             management._commands['syncdb'] = 'django.core'
-        else:
-            pass
-            # assert 0, dir(management)
-            # management.commands['syncdb'] = 'django.core'
+        # TODO deal with this for django > 1.4
 
         for connection in connections.all():
             self.call_plugins_method(
