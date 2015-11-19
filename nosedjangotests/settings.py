@@ -55,5 +55,6 @@ INSTALLED_APPS = (
 )
 
 SILENCED_SYSTEM_CHECKS = [
+    # Silence deprecation warning alerting user to a new test runner.
     '1_6.W001',
 ]
