@@ -108,16 +108,10 @@ class NoseDjango(Plugin):
         self.transaction.set_autocommit(old_value)
 
     def commit(self):
-        if self.django_version > 7:
-            self.save_point = self.transaction.savepoint()
-        else:
-            self.transaction.commit()
+        self.transaction.commit()
 
     def rollback(self):
-        if self.django_version > 7:
-            self.transaction.savepoint_rollback(self.save_point)
-        else:
-            self.transaction.rollback()
+        self.transaction.rollback()
 
     def store_original_transaction_methods(self):
         self.orig_commit = self.transaction.commit
