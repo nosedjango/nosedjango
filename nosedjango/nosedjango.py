@@ -69,6 +69,10 @@ class NoseDjango(Plugin):
     """
     name = 'django'
 
+    DJANGO_1_4 = (1, 4)
+    DJANGO_1_7 = (1, 7)
+    DJANGO_1_8 = (1, 8)
+
     def __init__(self):
         Plugin.__init__(self)
         self.nose_config = None
@@ -85,10 +89,10 @@ class NoseDjango(Plugin):
     @property
     def transaction(self):
         from django.db import transaction
-        if self.django_version < 7:
+        if self.django_version < self.DJANGO_1_7:
             transaction.set_autocommit = _dummy
             transaction.get_autocommit = _dummy
-        elif self.django_version > 7:
+        elif self.django_version > self.DJANGO_1_7:
             transaction.enter_transaction_management = _dummy
             transaction.leave_transaction_management = _dummy
             transaction.managed = _dummy
@@ -97,7 +101,7 @@ class NoseDjango(Plugin):
     @property
     def django_version(self):
         from django import VERSION
-        return VERSION[1]
+        return VERSION
 
     @contextmanager
     def set_autocommit(self, value):
@@ -119,7 +123,7 @@ class NoseDjango(Plugin):
         self.orig_savepoint_rollback = self.transaction.savepoint_rollback
         self.orig_enter = self.transaction.enter_transaction_management
         self.orig_leave = self.transaction.leave_transaction_management
-        if self.django_version > 6:
+        if self.django_version > self.DJANGO_1_7:
             self.orig_atomic = self.transaction.atomic
 
     def disable_transaction_support(self):
@@ -129,7 +133,7 @@ class NoseDjango(Plugin):
         self.transaction.savepoint_rollback = _dummy
         self.transaction.enter_transaction_management = _dummy
         self.transaction.leave_transaction_management = _dummy
-        if self.django_version > 6:
+        if self.django_version > self.DJANGO_1_7:
             self.transaction.atomic = _dummy_context_manager
 
     def restore_transaction_support(self):
@@ -139,7 +143,7 @@ class NoseDjango(Plugin):
         self.transaction.savepoint_rollback = self.orig_savepoint_rollback
         self.transaction.enter_transaction_management = self.orig_enter
         self.transaction.leave_transaction_management = self.orig_leave
-        if self.django_version > 6:
+        if self.django_version > self.DJANGO_1_7:
             self.transaction.atomic = self.orig_atomic
 
     def options(self, parser, env):
@@ -464,7 +468,7 @@ class NoseDjango(Plugin):
             settings.ROOT_URLCONF = test.context.urls
             clear_url_caches()
         self.call_plugins_method('afterUrlConfLoad', settings, test)
-        if self.django_version > 7:
+        if self.django_version > self.DJANGO_1_7:
             self.disable_transaction_support()
 
     def finalize(self, result=None):
