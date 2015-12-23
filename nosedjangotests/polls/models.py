@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 
 
@@ -9,7 +8,7 @@ class Poll(models.Model):
 
 
 class Choice(models.Model):
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey('contenttypes.ContentType')
     object_id = models.PositiveIntegerField()
     poll = generic.GenericForeignKey('content_type', 'object_id')
 
