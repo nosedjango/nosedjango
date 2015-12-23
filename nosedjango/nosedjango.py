@@ -320,10 +320,6 @@ class NoseDjango(Plugin):
             test, settings)
 
         if self._should_rebuild_schema(test):
-            for connection in connections.all():
-                connection.creation.destroy_test_db(
-                    self.old_db, verbosity=self.verbosity)
-
             teardown_test_environment()
 
             setup_test_environment()
