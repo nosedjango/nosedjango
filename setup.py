@@ -5,10 +5,32 @@ import sys
 from setuptools import setup, find_packages, Command
 
 
-class RunTests(Command):
+class RunTestBase(Command):
     description = "Run the test suite from the tests dir."
     user_options = []
     extra_env = {}
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+
+class RunTests(RunTestBase):
+    test_app = 'nosedjangotests.polls'
+    check_selenium = False
+    label = ''
+    args = []
+
+    def verify_selenium(self):
+        if not self.check_selenium:
+            return
+        try:
+            import selenium  # noqa
+        except ImportError:
+            print "Selenium not installed. Skipping tests."
+            sys.exit(0)
 
     def run(self):
         for env_name, env_value in self.extra_env.items():
@@ -27,118 +49,46 @@ class RunTests(Command):
             print 'nose and nosedjango are required to run this test suite'
             sys.exit(1)
 
-        test_results = []
+        print "Running tests with {label}".format(label=self.label)
+        self.verify_selenium()
 
-        print "Running tests with sqlite"
-        args = [
+        test_args = [
             '-v',
             '--verbosity=2',
             '--with-doctest',
             '--with-django',
             '--django-settings', 'nosedjangotests.settings',
-            '--with-django-sqlite',
-            'nosedjangotests.polls',
-        ]
-        test_results.append(TestProgram(argv=args, exit=False))
+            self.test_app,
+        ] + self.args
+        TestProgram(argv=test_args, exit=True)
 
-        print "Running tests multiprocess"
-        args = [
-            '-v',
-            '--verbosity=2',
-            '--with-doctest',
-            '--processes', '3',
-            '--with-django',
-            '--django-settings', 'nosedjangotests.settings',
-            '--with-django-sqlite',
-            'nosedjangotests.polls',
-        ]
-        test_results.append(TestProgram(argv=args, exit=False))
 
-        print "Running tests with class-based fixture grouping on sqlite"
-        args = [
-            '-v',
-            '--verbosity=2',
-            '--with-doctest',
-            '--with-django',
-            '--django-settings', 'nosedjangotests.settings',
-            '--with-django-sqlite',
-            'nosedjangotests.polls',
-        ]
-        test_results.append(TestProgram(argv=args, exit=False))
+class SQLiteTestCase(RunTests):
+    label = 'sqlite'
+    args = [
+        '--with-django-sqlite',
+    ]
 
-        print "Running tests with class-based fixture grouping multiprocess style"  # noqa
-        args = [
-            '-v',
-            '--verbosity=2',
-            '--with-doctest',
-            '--processes', '3',
-            '--with-django',
-            '--django-settings', 'nosedjangotests.settings',
-            '--with-django-sqlite',
-            'nosedjangotests.polls',
-        ]
-        test_results.append(TestProgram(argv=args, exit=False))
 
-        print "Running tests with mysql. (will fail if mysql not configured)"
-        args = [
-            '-v',
-            '--verbosity=2',
-            '--with-doctest',
-            '--with-django',
-            '--django-settings', 'nosedjangotests.settings',
-            'nosedjangotests.polls',
-        ]
-        test_results.append(TestProgram(argv=args, exit=False))
+class MultiProcessTestCase(RunTests):
+    label = 'sqlite and multiprocess'
+    args = [
+        '--with-django-sqlite',
+        '--processes', '3',
+    ]
 
-        print "Running tests with class-based fixture grouping on mysql."
-        print "This will fail if mysql isn't configured"
-        args = [
-            '-v',
-            '--verbosity=2',
-            '--with-doctest',
-            '--with-django',
-            '--django-settings', 'nosedjangotests.settings',
-            'nosedjangotests.polls',
-        ]
-        test_results.append(TestProgram(argv=args, exit=False))
 
-        selenium_installed = False
-        try:
-            import selenium
-            selenium_installed = selenium.__version__
-        except ImportError:
-            print "Selenium not installed. Skipping tests."
-            # No Selenium
-        if selenium_installed:
-            print "Running tests using selenium. (will fail if mysql not configured)"  # noqa
-            print "This will fail if mysql isn't configured"
-            args = [
-                '-v',
-                '--verbosity=2',
-                '--with-doctest',
-                '--with-django',
-                '--with-selenium',
-                '--django-settings', 'nosedjangotests.settings',
-                'nosedjangotests.selenium_tests',
-            ]
-            test_results.append(TestProgram(argv=args, exit=False))
+class MySQLTestCase(RunTests):
+    label = 'MySQL'
 
-        os.chdir(setup_dir)
 
-        is_success = [tr.success for tr in test_results]
-
-        if all(is_success):
-            print "Success!"
-            exit(0)
-        else:
-            print "Failure :( Some of the tests failed. Scroll up for details"
-            exit(1)
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
+class SeleniumTestCase(RunTests):
+    label = 'Selenium'
+    test_app = 'nosedjangotests.selenium_tests'
+    check_selenium = True
+    args = [
+        '--with-selenium',
+    ]
 
 import nosedjango
 
@@ -160,7 +110,12 @@ setup(
     license='GNU LGPL',
     packages=find_packages(exclude=['nosedjangotests', 'nosedjangotests.*']),
     zip_safe=False,
-    cmdclass={'test': RunTests},
+    cmdclass={
+        'test_sqlite': SQLiteTestCase,
+        'test_multiprocess': MultiProcessTestCase,
+        'test_mysql': MySQLTestCase,
+        'test_selenium': SeleniumTestCase,
+    },
     include_package_data=True,
     entry_points={
         'nose.plugins': [
