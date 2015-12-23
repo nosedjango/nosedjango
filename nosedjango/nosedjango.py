@@ -248,7 +248,10 @@ class NoseDjango(Plugin):
             self.call_plugins_method(
                 'beforeTestDb', settings, connection, management)
             with self.set_autocommit(True):
-                connection.creation.create_test_db(verbosity=self.verbosity)
+                connection.creation.create_test_db(
+                    verbosity=self.verbosity,
+                    autoclobber=True,
+                )
             logger.debug("Running syncdb")
             self._num_syncdb_calls += 1
             self.call_plugins_method('afterTestDb', settings, connection)
@@ -309,24 +312,19 @@ class NoseDjango(Plugin):
         # Restore transaction support on tests
         from django.conf import settings
         from django.db import connections
-        from django.test.utils import (
-            setup_test_environment,
-            teardown_test_environment,
-        )
         from django.core import mail
+
         mail.outbox = []
 
         use_transaction_isolation = self.should_use_transaction_isolation(
             test, settings)
 
         if self._should_rebuild_schema(test):
-            teardown_test_environment()
-
-            setup_test_environment()
             for connection in connections.all():
                 with self.set_autocommit(True):
                     connection.creation.create_test_db(
                         verbosity=self.verbosity,
+                        autoclobber=True,
                     )
 
             self.restore_transaction_support()
