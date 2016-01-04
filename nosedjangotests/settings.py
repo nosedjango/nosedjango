@@ -1,3 +1,5 @@
+import django
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -56,6 +58,14 @@ INSTALLED_APPS = (
 
     'nosedjangotests.polls',
 )
+if django.VERSION < (1, 7):
+    INSTALLED_APPS += (
+        'south',
+    )
+
+    SOUTH_MIGRATION_MODULES = {
+        'polls': 'nosedjangotests.polls.south_migrations',
+    }
 
 SILENCED_SYSTEM_CHECKS = [
     # Silence deprecation warning alerting user to a new test runner.
