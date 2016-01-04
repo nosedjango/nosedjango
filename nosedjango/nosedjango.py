@@ -295,11 +295,6 @@ class NoseDjango(Plugin):
             self.transaction.set_autocommit(True)
         return use_transaction_isolation
 
-    def _should_rebuild_schema(self, test):
-        if getattr(test.context, 'rebuild_schema', False):
-            return True
-        return False
-
     def transaction_is_managed(self):
         if hasattr(self.transaction, 'is_managed'):
             return self.transaction.is_managed()
@@ -318,28 +313,6 @@ class NoseDjango(Plugin):
 
         use_transaction_isolation = self.should_use_transaction_isolation(
             test, settings)
-
-        if self._should_rebuild_schema(test):
-            for connection in connections.all():
-                with self.set_autocommit(True):
-                    connection.creation.create_test_db(
-                        verbosity=self.verbosity,
-                        autoclobber=True,
-                    )
-
-            self.restore_transaction_support()
-            if use_transaction_isolation:
-                self.commit()
-            if self.transaction_is_managed():
-                self.transaction.set_autocommit(False)
-            # If connection is not closed Postgres can go wild with
-            # character encodings.
-            for connection in connections.all():
-                connection.close()
-            logger.debug("Running syncdb")
-            self._num_syncdb_calls += 1
-            self._loaded_test_fixtures = []
-            return
 
         if use_transaction_isolation:
             self.restore_transaction_support()
