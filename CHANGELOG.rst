@@ -1,3 +1,11 @@
+1.0.2b1
+-------
+
+released 2016-01-04
+
+* Tests once again work in MySQL in all supported versions of django
+* Dropped support for rebuilding the schema of the DB between test.
+
 1.0.1b1
 -------
 
