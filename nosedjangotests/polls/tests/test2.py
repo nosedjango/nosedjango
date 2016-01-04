@@ -34,24 +34,6 @@ class FixtureBleed2TestCase(TestCase):
         self.assertEqual(num_polls, 1)
 
 
-class AltersBleed1TestCase(TestCase):
-    fixtures = ['polls1.json']
-    rebuild_schema = True
-
-    # This test must run first
-    def test_aaa_db_alteration(self):
-        # Alter the table in a sufficient fashion that if the schema was not
-        # rebuilt, it would cause problems for future tests.
-        from django.db import connection
-        cursor = connection.cursor()
-        cursor.execute('DROP TABLE `polls_poll`')
-
-    # This test must run second.
-    def test_zzz_db_was_rebuilt(self):
-        # Ensure the schema was rebuilt by querying on the Poll Table
-        self.assertNotEqual(Poll.objects.count(), 0)
-
-
 class AltersBleed2TestCase(TestCase):
     fixtures = ['polls2.json']
 

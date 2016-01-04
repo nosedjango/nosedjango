@@ -6,12 +6,12 @@ Nose django helper plugin
 
 Nosedjango brings the goodness of Nose and its plugin ecosystem to the world of
 Django testing. Nose already has plugins for multiprocessing, coverage, tagging,
-profiling, skipping, xunit plugin and most everything else you could need. 
+profiling, skipping, xunit plugin and most everything else you could need.
 Nosedjango means you don't have to re-invent those wheels.
 
-Perhaps the most compelling case for using nosedjango is the performance gains 
-seen when using the multiprocess module. (both runs on a core i7 laptop with a 
-fixture-intensive test suite) 
+Perhaps the most compelling case for using nosedjango is the performance gains
+seen when using the multiprocess module. (both runs on a core i7 laptop with a
+fixture-intensive test suite)
 
 Normal Django testrunner using sqlite ::
 
@@ -28,7 +28,7 @@ NoseDjango with 8 processes ::
     Ran 65 tests in 35.731s
 
 Nose is ~14x faster.
-    
+
 Easy Extensibility
 ------------------
 
@@ -41,7 +41,7 @@ to do things like:
 * Start a cherrpy server for integration-style tests.
 * Make it easier to test Celery.
 * Create and use a Sphinx search index for fulltext search tests.
-* Open an SSH tunnel for things like Selenium that might need outside 
+* Open an SSH tunnel for things like Selenium that might need outside
   resources.
 * Run Selenium2 functional tests in a headless virtual frame buffer.
 * Selectively switch out settings from the command line for different kinds
@@ -84,7 +84,7 @@ Parallel Test Running Via Multiprocess
 
 An easy win for Nosedjango out of the box is the ability to safely distribute
 tests across multiple processes, dramatically speeding up test runs on
-multicore machines. 
+multicore machines.
 
 In the simplest case, the following will run your tests distributed across two
 cores using in-memory sqlite databases and separate file storage locations
@@ -92,8 +92,8 @@ to minimize file collision conflicts::
 
     nosetests --with-django --with-django-sqlite --with-django-testfs --processes=2 <your_project_module>
 
-.. Note:: 
-    For very small test suites or test suites that don't use fixtures, the 
+.. Note::
+    For very small test suites or test suites that don't use fixtures, the
     overhead from starting multiple processes can result in the full test
     run actually being *slower* with multiple processes compared to a single
     process.
@@ -140,31 +140,12 @@ Test Discovery
 ~~~~~~~~~~~~~~
 
 Nosedjango relies on Nose's test discovery method, which means that Nose might
-find some tests that weren't being run by Django. 
+find some tests that weren't being run by Django.
 
 Database Schema Isn't Re-created Every Test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For performance reasons, the database schema is only created once. If you have
-tests that alter the schema (migration tests for example), you'll need to add
-a ``rebuild_schema`` attribute to those tests.
-
-For example::
-
-    class LargerUsernameTestCase(TestCase):
-        rebuild_schema = True
-
-        def setUp(self):
-            if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
-                from django.db import connection # pylint: disable=W0404
-                cursor = connection.cursor()
-                cursor.execute("ALTER TABLE `auth_user` CHANGE COLUMN `username` "
-                               "`username` VARCHAR(130) "
-                               "COLLATE utf8_unicode_ci NOT NULL")
-                                
-
-        def test_long_username(self):
-            # test some stuff
+For performance reasons, the database schema is only created once.
 
 Fixture Loading
 ~~~~~~~~~~~~~~~
@@ -173,7 +154,7 @@ Nose supports module-level fixtures, and so does Nosedjango. This means that if
 you have a ``fixtures`` variable floating around in a test module, Nosedjango
 will load it.
 
-For example:: 
+For example::
 
     fixtures = ['cheese.json', 'cakes']
 
@@ -222,7 +203,7 @@ Known Issues
 Authors
 -------
 
-NoseDjango is currently maintained by Wes Winham <winhamwr@gmail.com>. 
+NoseDjango is currently maintained by Wes Winham <winhamwr@gmail.com>.
 It was previously maintained by Jyrki Pulliainen
 <jyrki.pulliainen@inoi.fi>.
 

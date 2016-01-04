@@ -248,7 +248,10 @@ class NoseDjango(Plugin):
             self.call_plugins_method(
                 'beforeTestDb', settings, connection, management)
             with self.set_autocommit(True):
-                connection.creation.create_test_db(verbosity=self.verbosity)
+                connection.creation.create_test_db(
+                    verbosity=self.verbosity,
+                    autoclobber=True,
+                )
             logger.debug("Running syncdb")
             self._num_syncdb_calls += 1
             self.call_plugins_method('afterTestDb', settings, connection)
@@ -292,11 +295,6 @@ class NoseDjango(Plugin):
             self.transaction.set_autocommit(True)
         return use_transaction_isolation
 
-    def _should_rebuild_schema(self, test):
-        if getattr(test.context, 'rebuild_schema', False):
-            return True
-        return False
-
     def transaction_is_managed(self):
         if hasattr(self.transaction, 'is_managed'):
             return self.transaction.is_managed()
@@ -309,43 +307,12 @@ class NoseDjango(Plugin):
         # Restore transaction support on tests
         from django.conf import settings
         from django.db import connections
-        from django.test.utils import (
-            setup_test_environment,
-            teardown_test_environment,
-        )
         from django.core import mail
+
         mail.outbox = []
 
         use_transaction_isolation = self.should_use_transaction_isolation(
             test, settings)
-
-        if self._should_rebuild_schema(test):
-            for connection in connections.all():
-                connection.creation.destroy_test_db(
-                    self.old_db, verbosity=self.verbosity)
-
-            teardown_test_environment()
-
-            setup_test_environment()
-            for connection in connections.all():
-                with self.set_autocommit(True):
-                    connection.creation.create_test_db(
-                        verbosity=self.verbosity,
-                    )
-
-            self.restore_transaction_support()
-            if use_transaction_isolation:
-                self.commit()
-            if self.transaction_is_managed():
-                self.transaction.set_autocommit(False)
-            # If connection is not closed Postgres can go wild with
-            # character encodings.
-            for connection in connections.all():
-                connection.close()
-            logger.debug("Running syncdb")
-            self._num_syncdb_calls += 1
-            self._loaded_test_fixtures = []
-            return
 
         if use_transaction_isolation:
             self.restore_transaction_support()

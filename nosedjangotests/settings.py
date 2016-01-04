@@ -1,3 +1,5 @@
+import django
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -9,12 +11,15 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'dev',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': '',
         'PORT': '',
+        'OPTIONS': {
+            'init_command': 'SET storage_engine=InnoDB',
+        },
     }
 }
 
@@ -53,6 +58,14 @@ INSTALLED_APPS = (
 
     'nosedjangotests.polls',
 )
+if django.VERSION < (1, 7):
+    INSTALLED_APPS += (
+        'south',
+    )
+
+    SOUTH_MIGRATION_MODULES = {
+        'polls': 'nosedjangotests.polls.south_migrations',
+    }
 
 SILENCED_SYSTEM_CHECKS = [
     # Silence deprecation warning alerting user to a new test runner.
