@@ -82,6 +82,14 @@ class MySQLTestCase(RunTests):
     label = 'MySQL'
 
 
+class CherryPyLiveServerTestCase(RunTests):
+    label = 'Cherry Py Test Case'
+    args = [
+        '--with-django-sqlite',
+        '--with-cherrypyliveserver',
+    ]
+
+
 class SeleniumTestCase(RunTests):
     label = 'Selenium'
     test_app = 'nosedjangotests.selenium_tests'
@@ -115,6 +123,7 @@ setup(
         'test_multiprocess': MultiProcessTestCase,
         'test_mysql': MySQLTestCase,
         'test_selenium': SeleniumTestCase,
+        'test_cherrypy': CherryPyLiveServerTestCase,
     },
     include_package_data=True,
     entry_points={
