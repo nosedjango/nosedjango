@@ -82,7 +82,7 @@ class MySQLTestCase(RunTests):
     label = 'MySQL'
 
 
-class CherryPyLiveSerberTestCase(RunTests):
+class CherryPyLiveServerTestCase(RunTests):
     label = 'Cherry Py Test Case'
     args = [
         '--with-django-sqlite',
@@ -123,7 +123,7 @@ setup(
         'test_multiprocess': MultiProcessTestCase,
         'test_mysql': MySQLTestCase,
         'test_selenium': SeleniumTestCase,
-        'test_cherrypy': CherryPyLiveSerberTestCase,
+        'test_cherrypy': CherryPyLiveServerTestCase,
     },
     include_package_data=True,
     entry_points={
