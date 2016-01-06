@@ -59,8 +59,8 @@ class CherryPyLiveServerPlugin(Plugin):
         self.stop_test_server()
 
     def start_server(self, address='0.0.0.0', port=8000):
-        from django.core.servers.basehttp import AdminMediaHandler
-        _application = AdminMediaHandler(WSGIHandler())
+        from django.contrib.staticfiles.handlers import StaticFilesHandler
+        _application = StaticFilesHandler(WSGIHandler())
 
         def application(environ, start_response):
             environ['PATH_INFO'] = environ['SCRIPT_NAME'] + environ['PATH_INFO']  # noqa
