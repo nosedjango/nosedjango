@@ -136,7 +136,7 @@ class NoseDjango(Plugin):
             return
         self.TestCase.cls_atomics = self.TestCase._enter_atomics()
 
-    def exit_atoimcs(self):
+    def exit_atomics(self):
         if self.django_version < self.DJANGO_1_7:
             return
         if not hasattr(self.TestCase, 'cls_atomics'):
@@ -345,7 +345,7 @@ class NoseDjango(Plugin):
         if use_transaction_isolation:
             self.restore_transaction_support()
             logger.debug("Rolling back")
-            self.exit_atoimcs()
+            self.exit_atomics()
             self.restore_autocommit()
             self.rollback()
             if self.transaction_is_managed():
