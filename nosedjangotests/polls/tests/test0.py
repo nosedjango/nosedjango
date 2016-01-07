@@ -60,13 +60,6 @@ class FixtureBleedThroughTestCase(TestCase):
 
 
 class NonFixtureBleedThroughTestCase(TestCase):
-    @contextmanager
-    def set_autocommit(self, value):
-        old_value = transaction.get_autocommit()
-        transaction.set_autocommit(value)
-        yield
-        transaction.set_autocommit(old_value)
-
     def test_AAA_create_a_poll(self):
         with set_autocommit(True):
             with atomic():
@@ -77,3 +70,11 @@ class NonFixtureBleedThroughTestCase(TestCase):
 
     def test_BBB_no_polls_in_the_db(self):
         self.assertEqual(Poll.objects.count(), 0)
+
+
+class FixtureBleedThroughWithoutTransactionManagementTestCase(FixtureBleedThroughTestCase):  # noqa
+    use_transaction_isolation = False
+
+
+class NonFixtureBleedThroughWithoutTransactionManagementTestCase(NonFixtureBleedThroughTestCase):  # noqa
+    use_transaction_isolation = False
