@@ -1,11 +1,18 @@
-1.0.3b1
+1.0.4
+-------
+
+released 2016-01-07
+
+* Fixed transaction isolation in django 1.8
+
+1.0.3
 -------
 
 released 2016-01-06
 
 * Fixed the Cherry Py plugin in django 1.8
 
-1.0.2b1
+1.0.2
 -------
 
 released 2016-01-04
