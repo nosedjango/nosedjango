@@ -1,3 +1,10 @@
+1.0.5
+-------
+
+released 2016-01-14
+
+* Fixed atomic use as callable decorator.
+
 1.0.4
 -------
 
