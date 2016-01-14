@@ -11,8 +11,6 @@ import os
 import re
 import sys
 
-from contextlib import contextmanager
-
 import nose.case
 from nose.plugins import Plugin
 
@@ -52,9 +50,26 @@ def _dummy(*args, **kwargs):
     return
 
 
-@contextmanager
-def _dummy_context_manager(*args, **kwargs):
-    yield
+class ContextDecorator(object):
+    """
+    A base class that enables a context manager to also be used as a decorator.
+    """
+    def __call__(self, func):
+        def inner(*args, **kwargs):
+            with self:
+                return func(*args, **kwargs)
+        return inner
+
+
+class _dummy_context_manager(ContextDecorator):
+    def __init__(self, *args, **kwargs):
+        return
+
+    def __enter__(self):
+        return
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return
 
 
 class NoseDjango(Plugin):
