@@ -101,7 +101,7 @@ class SeleniumPlugin(Plugin):
             if self._firefox_binary is None:
                 self._driver = FirefoxWebDriver()
             else:
-                from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+                from selenium.webdriver.firefox.firefox_binary import FirefoxBinary  # noqa
                 binary = FirefoxBinary(self._firefox_binary)
                 self._driver = FirefoxWebDriver(firefox_binary=binary)
         elif self._driver_type == 'chrome':
@@ -265,7 +265,8 @@ def monkey_patch_methods(driver):
     old_close = driver.__class__.close
 
     def new_close(self, *args, **kwargs):
-        self.get('http://www.google.com')  # Random page to ensure page is changed
+        # page to ensure page is changed
+        self.get('http://www.google.com')
         old_close(self, *args, **kwargs)
     driver.__class__.close = new_close
 
