@@ -266,7 +266,7 @@ def monkey_patch_methods(driver):
     old_close = driver.__class__.close
 
     def new_close(self, *args, **kwargs):
-        self.get('www.google.com')  # Random page to ensure page is changed
+        self.get('http://www.google.com')  # Random page to ensure page is changed
         old_close(self, *args, **kwargs)
     driver.__class__.close = new_close
 
