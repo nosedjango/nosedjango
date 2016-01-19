@@ -35,6 +35,11 @@ class SeleniumPlugin(Plugin):
             default='firefox',
         )
         parser.add_option(
+            '--browser-binary',
+            help='the path to the browser binary',
+            default=None,
+        )
+        parser.add_option(
             '--remote-server-address',
             help='Use a remote server to run the tests, must pass in the server address',  # noqa
             default='localhost',
@@ -65,10 +70,12 @@ class SeleniumPlugin(Plugin):
             raise RuntimeError(
                 '--driver-type must be one of: %s' % ' '.join(valid_browsers)
             )
+        self._browser_binary = options.browser_binary
         self._driver_type = options.driver_type.replace('_', ' ')
         self._remote_server_address = options.remote_server_address
         self._selenium_port = options.selenium_port
         self._driver = None
+
         self._current_windows_handle = None
 
         self.x_display = 1
@@ -92,7 +99,12 @@ class SeleniumPlugin(Plugin):
             return self._driver
 
         if self._driver_type == 'firefox':
-            self._driver = FirefoxWebDriver()
+            if self._browser_binary is None:
+                self._driver = FirefoxWebDriver()
+            else:
+                from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+                binary = FirefoxBinary(self._browser_binary)
+                self._driver = FirefoxWebDriver(firefox_binary=binary)
         elif self._driver_type == 'chrome':
             self._driver = ChromeDriver()
         else:

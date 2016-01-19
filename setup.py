@@ -98,6 +98,16 @@ class SeleniumTestCase(RunTests):
         '--with-selenium',
     ]
 
+class SeleniumBinaryTestCase(RunTests):
+    label = 'Selenium Binary Option'
+    test_app = 'nosedjangotests.selenium_tests_specify_binary'
+    check_selenium = True
+    args = [
+        '--with-django-sqlite',
+        '--with-selenium',
+        '--browser-binary=/Applications/FirefoxDeveloperEdition.app/Contents/MacOS/firefox',
+    ]
+
 import nosedjango
 
 long_description = codecs.open("README.rst", "r", "utf-8").read()
@@ -123,6 +133,7 @@ setup(
         'test_multiprocess': MultiProcessTestCase,
         'test_mysql': MySQLTestCase,
         'test_selenium': SeleniumTestCase,
+        'test_selenium_binary': SeleniumBinaryTestCase,
         'test_cherrypy': CherryPyLiveServerTestCase,
     },
     include_package_data=True,
