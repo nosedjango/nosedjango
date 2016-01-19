@@ -100,7 +100,7 @@ class SeleniumTestCase(RunTests):
 
 class SeleniumBinaryTestCase(RunTests):
     label = 'Selenium Binary Option'
-    test_app = 'nosedjangotests.selenium_tests_specify_binary'
+    test_app = 'nosedjangotests.selenium_binary_tests'
     check_selenium = True
     args = [
         '--with-django-sqlite',
