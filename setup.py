@@ -1,6 +1,7 @@
 import codecs
 import os
 import sys
+import tempfile
 
 from setuptools import setup, find_packages, Command
 
@@ -105,8 +106,30 @@ class SeleniumBinaryTestCase(RunTests):
     args = [
         '--with-django-sqlite',
         '--with-selenium',
-        '--browser-binary=/Applications/FirefoxDeveloperEdition.app/Contents/MacOS/firefox',
     ]
+
+    def run(self):
+        from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+        # no temp dir context manager in py2
+        cur_dir = os.getcwd()
+        tmpdir = tempfile.mkdtemp()
+        os.chdir(tmpdir)
+
+        # borrow selenium's magical binary finding logic
+        dummy_binary = FirefoxBinary()
+        ff_path = dummy_binary._start_cmd.strip()
+
+        # create a symlink to it in the tmpdir
+
+        os.symlink(ff_path, 'ff-link')
+        full_path = os.path.join(tmpdir, 'ff-link')
+        self.args.append('--browser-binary=%s' % full_path,)
+
+        # change back, otherwise run looks in the temp dir for nosedjangotests
+
+        os.chdir(cur_dir)
+
+        RunTests.run(self)
 
 import nosedjango
 
