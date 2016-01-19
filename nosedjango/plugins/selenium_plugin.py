@@ -75,7 +75,6 @@ class SeleniumPlugin(Plugin):
         self._remote_server_address = options.remote_server_address
         self._selenium_port = options.selenium_port
         self._driver = None
-
         self._current_windows_handle = None
 
         self.x_display = 1
