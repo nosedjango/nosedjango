@@ -1,7 +1,6 @@
 import codecs
 import os
 import sys
-import tempfile
 
 from setuptools import setup, find_packages, Command
 
