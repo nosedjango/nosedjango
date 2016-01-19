@@ -158,7 +158,12 @@ class NoseDjango(Plugin):
             # An error occurred, early exit so we don't squash the error
             # message.
             return
-        self.TestCase._rollback_atomics(self.TestCase.cls_atomics)
+        try:
+            self.TestCase._rollback_atomics(self.TestCase.cls_atomics)
+        except Exception:
+            # If we can't roll back atomics, it means we crashed somewhere in
+            # setup. Don't hide that error by eroding here too.
+            pass
 
     def store_original_transaction_methods(self):
         self.orig_commit = self.transaction.commit
