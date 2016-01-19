@@ -1,7 +1,7 @@
 1.0.6
 -------
 
-released TBD
+released 2016-01-19
 
 * Create the client in django 1.8 test cases.
 * Fixed a problem with fixture loading
