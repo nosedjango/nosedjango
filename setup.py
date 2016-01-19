@@ -110,24 +110,16 @@ class SeleniumBinaryTestCase(RunTests):
 
     def run(self):
         from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
-        # no temp dir context manager in py2
-        cur_dir = os.getcwd()
-        tmpdir = tempfile.mkdtemp()
-        os.chdir(tmpdir)
 
         # borrow selenium's magical binary finding logic
         dummy_binary = FirefoxBinary()
         ff_path = dummy_binary._start_cmd.strip()
 
-        # create a symlink to it in the tmpdir
+        # mangle the path with a no-op of prefix slashes.
+        # symlinks run into very nasty issues with newer versions of Firefox on OSX
 
-        os.symlink(ff_path, 'ff-link')
-        full_path = os.path.join(tmpdir, 'ff-link')
-        self.args.append('--browser-binary=%s' % full_path,)
+        self.args.append('--browser-binary=////%s' % ff_path)
 
-        # change back, otherwise run looks in the temp dir for nosedjangotests
-
-        os.chdir(cur_dir)
 
         RunTests.run(self)
 
