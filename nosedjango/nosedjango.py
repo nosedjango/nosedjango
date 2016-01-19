@@ -505,10 +505,14 @@ class NoseDjango(Plugin):
         from django.core.urlresolvers import clear_url_caches
 
         self.call_plugins_method('beforeDestroyTestDb', settings, connection)
-        connection.creation.destroy_test_db(
-            self.old_db,
-            verbosity=self.verbosity,
-        )
+        try:
+            connection.creation.destroy_test_db(
+                self.old_db,
+                verbosity=self.verbosity,
+            )
+        except Exception:
+            # If we can't tear down the test DB, don't worry about it.
+            pass
         self.call_plugins_method('afterDestroyTestDb', settings, connection)
 
         self.call_plugins_method(
