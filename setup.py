@@ -118,7 +118,7 @@ class SeleniumBinaryTestCase(RunTests):
         # mangle the path with a no-op of prefix slashes.
         # symlinks run into very nasty issues with newer versions of Firefox on OSX
 
-        self.args.append('--browser-binary=////%s' % ff_path)
+        self.args.append('--firefox-binary=////%s' % ff_path)
 
         RunTests.run(self)
 

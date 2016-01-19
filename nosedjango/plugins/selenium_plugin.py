@@ -35,8 +35,8 @@ class SeleniumPlugin(Plugin):
             default='firefox',
         )
         parser.add_option(
-            '--browser-binary',
-            help='the path to the browser binary',
+            '--firefox-binary',
+            help='the path to the firefox browser binary',
             default=None,
         )
         parser.add_option(
