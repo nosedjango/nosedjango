@@ -483,6 +483,8 @@ class NoseDjango(Plugin):
             self.restore_transaction_support()
             self.enter_atomics()
             self.disable_transaction_support()
+        if hasattr(test.context, 'client_class'):
+            test.context.client = test.context.client_class()
 
     def finalize(self, result=None):
         """
