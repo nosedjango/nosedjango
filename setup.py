@@ -108,6 +108,7 @@ class SeleniumBinaryTestCase(RunTests):
     ]
 
     def run(self):
+        self.verify_selenium()
         from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
         # borrow selenium's magical binary finding logic
@@ -118,7 +119,6 @@ class SeleniumBinaryTestCase(RunTests):
         # symlinks run into very nasty issues with newer versions of Firefox on OSX
 
         self.args.append('--browser-binary=////%s' % ff_path)
-
 
         RunTests.run(self)
 
