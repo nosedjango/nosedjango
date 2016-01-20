@@ -158,7 +158,12 @@ class NoseDjango(Plugin):
             # An error occurred, early exit so we don't squash the error
             # message.
             return
-        self.TestCase._rollback_atomics(self.TestCase.cls_atomics)
+        try:
+            self.TestCase._rollback_atomics(self.TestCase.cls_atomics)
+        except Exception:
+            # If we can't roll back atomics, it means we crashed somewhere in
+            # setup. Don't hide that error by eroding here too.
+            pass
 
     def store_original_transaction_methods(self):
         self.orig_commit = self.transaction.commit
@@ -483,6 +488,8 @@ class NoseDjango(Plugin):
             self.restore_transaction_support()
             self.enter_atomics()
             self.disable_transaction_support()
+        if hasattr(test.context, 'client_class'):
+            test.context.client = test.context.client_class()
 
     def finalize(self, result=None):
         """
@@ -498,10 +505,14 @@ class NoseDjango(Plugin):
         from django.core.urlresolvers import clear_url_caches
 
         self.call_plugins_method('beforeDestroyTestDb', settings, connection)
-        connection.creation.destroy_test_db(
-            self.old_db,
-            verbosity=self.verbosity,
-        )
+        try:
+            connection.creation.destroy_test_db(
+                self.old_db,
+                verbosity=self.verbosity,
+            )
+        except Exception:
+            # If we can't tear down the test DB, don't worry about it.
+            pass
         self.call_plugins_method('afterDestroyTestDb', settings, connection)
 
         self.call_plugins_method(
