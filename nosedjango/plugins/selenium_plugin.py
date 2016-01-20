@@ -35,6 +35,11 @@ class SeleniumPlugin(Plugin):
             default='firefox',
         )
         parser.add_option(
+            '--firefox-binary',
+            help='the path to the firefox browser binary',
+            default=None,
+        )
+        parser.add_option(
             '--remote-server-address',
             help='Use a remote server to run the tests, must pass in the server address',  # noqa
             default='localhost',
@@ -65,6 +70,7 @@ class SeleniumPlugin(Plugin):
             raise RuntimeError(
                 '--driver-type must be one of: %s' % ' '.join(valid_browsers)
             )
+        self._firefox_binary = options.firefox_binary
         self._driver_type = options.driver_type.replace('_', ' ')
         self._remote_server_address = options.remote_server_address
         self._selenium_port = options.selenium_port
@@ -92,7 +98,12 @@ class SeleniumPlugin(Plugin):
             return self._driver
 
         if self._driver_type == 'firefox':
-            self._driver = FirefoxWebDriver()
+            if self._firefox_binary is None:
+                self._driver = FirefoxWebDriver()
+            else:
+                from selenium.webdriver.firefox.firefox_binary import FirefoxBinary  # noqa
+                binary = FirefoxBinary(self._firefox_binary)
+                self._driver = FirefoxWebDriver(firefox_binary=binary)
         elif self._driver_type == 'chrome':
             self._driver = ChromeDriver()
         else:
@@ -254,7 +265,8 @@ def monkey_patch_methods(driver):
     old_close = driver.__class__.close
 
     def new_close(self, *args, **kwargs):
-        self.get('www.google.com')  # Random page to ensure page is changed
+        # page to ensure page is changed
+        self.get('http://www.google.com')
         old_close(self, *args, **kwargs)
     driver.__class__.close = new_close
 

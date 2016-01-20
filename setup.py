@@ -98,6 +98,30 @@ class SeleniumTestCase(RunTests):
         '--with-selenium',
     ]
 
+class SeleniumBinaryTestCase(RunTests):
+    label = 'Selenium Binary Option'
+    test_app = 'nosedjangotests.selenium_binary_tests'
+    check_selenium = True
+    args = [
+        '--with-django-sqlite',
+        '--with-selenium',
+    ]
+
+    def run(self):
+        self.verify_selenium()
+        from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+
+        # borrow selenium's magical binary finding logic
+        dummy_binary = FirefoxBinary()
+        ff_path = dummy_binary._start_cmd.strip()
+
+        # mangle the path with a no-op of prefix slashes.
+        # symlinks run into very nasty issues with newer versions of Firefox on OSX
+
+        self.args.append('--firefox-binary=////%s' % ff_path)
+
+        RunTests.run(self)
+
 import nosedjango
 
 long_description = codecs.open("README.rst", "r", "utf-8").read()
@@ -123,6 +147,7 @@ setup(
         'test_multiprocess': MultiProcessTestCase,
         'test_mysql': MySQLTestCase,
         'test_selenium': SeleniumTestCase,
+        'test_selenium_binary': SeleniumBinaryTestCase,
         'test_cherrypy': CherryPyLiveServerTestCase,
     },
     include_package_data=True,
