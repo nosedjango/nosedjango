@@ -1,3 +1,11 @@
+1.0.7
+-------
+
+released TBD
+
+* Selenium plugin can now specify ``--firefox-binary`` to specify path to Firefox
+* Selenium browser closes correctly on exit
+
 1.0.6
 -------
 
