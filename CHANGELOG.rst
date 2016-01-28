@@ -1,7 +1,7 @@
 1.0.8
 -------
 
-released 2016-01-28
+released 2016-01-28 : BROKEN DO NOT INSTALL
 
 * No longer disable transaction support in django 1.8. It doesn't reliably
   work, and it isn't required anymore.
