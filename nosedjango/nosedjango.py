@@ -54,14 +54,6 @@ class ContextDecorator(object):
     """
     A base class that enables a context manager to also be used as a decorator.
     """
-    def __call__(self, func):
-        def inner(*args, **kwargs):
-            with self:
-                return func(*args, **kwargs)
-        return inner
-
-
-class _dummy_context_manager(ContextDecorator):
     def __init__(self, *args, **kwargs):
         return
 
@@ -71,6 +63,15 @@ class _dummy_context_manager(ContextDecorator):
     def __exit__(self, exc_type, exc_value, traceback):
         return
 
+    def __call__(self, func):
+        def inner(*args, **kwargs):
+            with self:
+                return func(*args, **kwargs)
+        return inner
+
+
+def _dummy_context_manager(*args, **kwargs):
+    return ContextDecorator(*args, **kwargs)
 
 class NoseDjango(Plugin):
     """
