@@ -1,6 +1,14 @@
 1.0.7
 -------
 
+released 2016-01-28
+
+* No longer disable transaction support in django 1.8. It doesn't reliably
+  work, and it isn't required anymore.
+
+1.0.7
+-------
+
 released 2016-01-20
 
 * Selenium plugin can now specify ``--firefox-binary`` to specify path to Firefox

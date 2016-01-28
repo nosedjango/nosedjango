@@ -176,6 +176,8 @@ class NoseDjango(Plugin):
             self.orig_atomic = self.transaction.atomic
 
     def disable_transaction_support(self):
+        if self.django_version > self.DJANGO_1_7:
+            return
         self.transaction.commit = _dummy
         self.transaction.rollback = _dummy
         self.transaction.savepoint_commit = _dummy
