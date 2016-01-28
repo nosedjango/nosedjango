@@ -73,6 +73,7 @@ class ContextDecorator(object):
 def _dummy_context_manager(*args, **kwargs):
     return ContextDecorator(*args, **kwargs)
 
+
 class NoseDjango(Plugin):
     """
     Enable to set up django test environment before running all tests, and
