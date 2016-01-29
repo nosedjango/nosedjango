@@ -10,7 +10,7 @@ class Poll(models.Model):
     question = models.CharField(max_length=200)
     pub_date = models.DateTimeField('date published')
 
-    @atomic()
+    @atomic
     def reset(self):
         self.question = ""
         self.save()
@@ -24,7 +24,7 @@ class Choice(models.Model):
     choice = models.CharField(max_length=200)
     votes = models.IntegerField(default=0)
 
-    @atomic()
+    @atomic
     def reset(self):
         self.votes = 0
         self.save()
