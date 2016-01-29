@@ -1,3 +1,11 @@
+1.0.9
+-------
+
+released 2016-01-29
+
+* Update the django 1.8 dummy context manager to work as ``@atomic()`` and
+  ``@atomic`` as well.
+
 1.0.8
 -------
 
