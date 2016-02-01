@@ -1,5 +1,9 @@
 from django.db import transaction
 try:
+    atomic_transaction = transaction.atomic
+except AttributeError:
+    transaction.atomic = transaction.commit_on_success
+try:
     from django.db.transaction import atomic
 except ImportError:
     from django.db.transaction import commit_on_success as atomic
