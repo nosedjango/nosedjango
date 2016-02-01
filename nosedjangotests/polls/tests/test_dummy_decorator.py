@@ -22,7 +22,7 @@ class AtomicTestCase(TestCase):
 
         choice = Choice.objects.get()
         choice.votes = 42
-        tester = import_module("polls.tests.transaction_tester")
+        tester = import_module("polls.helpers")
         choice_pk = tester.decorator_reset_choice(choice=choice)
         self.assertEqual(choice_pk, choice.pk)
         choice = Choice.objects.get()
@@ -34,7 +34,7 @@ class AtomicTestCase(TestCase):
 
         choice = Choice.objects.get()
         choice.votes = 42
-        tester = import_module("polls.tests.transaction_tester")
+        tester = import_module("polls.helpers")
         choice_pk = tester.callable_reset_choice(choice=choice)
         self.assertEqual(choice_pk, choice.pk)
         choice = Choice.objects.get()
@@ -46,7 +46,7 @@ class AtomicTestCase(TestCase):
 
         choice = Choice.objects.get()
         choice.votes = 42
-        tester = import_module("polls.tests.transaction_tester")
+        tester = import_module("polls.helpers")
         choice_pk = tester.ctxt_man_reset_choice(choice=choice)
         self.assertEqual(choice_pk, choice.pk)
         choice = Choice.objects.get()
@@ -67,7 +67,7 @@ class TransactionTestCase(TestCase):
 
         choice = Choice.objects.get()
         choice.votes = 42
-        tester = import_module("polls.tests.transaction_tester")
+        tester = import_module("polls.helpers")
         choice_pk = tester.decorator_reset_choice(choice=choice)
         self.assertEqual(choice_pk, choice.pk)
         choice = Choice.objects.get()
@@ -79,7 +79,7 @@ class TransactionTestCase(TestCase):
 
         choice = Choice.objects.get()
         choice.votes = 42
-        tester = import_module("polls.tests.transaction_tester")
+        tester = import_module("polls.helpers")
         choice_pk = tester.callable_reset_choice(choice=choice)
         self.assertEqual(choice_pk, choice.pk)
         choice = Choice.objects.get()
@@ -91,7 +91,7 @@ class TransactionTestCase(TestCase):
 
         choice = Choice.objects.get()
         choice.votes = 42
-        tester = import_module("polls.tests.transaction_tester")
+        tester = import_module("polls.helpers")
         choice_pk = tester.ctxt_man_reset_choice(choice=choice)
         self.assertEqual(choice_pk, choice.pk)
         choice = Choice.objects.get()
