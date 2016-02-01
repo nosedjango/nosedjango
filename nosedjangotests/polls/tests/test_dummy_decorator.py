@@ -23,14 +23,10 @@ class TransactionTestCase(TestCase):
     def test_decorator_atomic(self):
         if django.VERSION < (1, 7):
             raise SkipTest('This test is only an issue in django 1.8+')
-        from django.db.transaction import get_connection
-        connection = get_connection()
-        connection._patched = False
+
         choice = Choice.objects.get()
         choice.votes = 42
-
         tester = import_module("polls.tests.transaction_tester")
-
         choice_pk = tester.decorator_reset_choice(choice=choice)
         self.assertEqual(choice_pk, choice.pk)
         choice = Choice.objects.get()
@@ -39,14 +35,10 @@ class TransactionTestCase(TestCase):
     def test_callable_decorator_atomic(self):
         if django.VERSION < (1, 7):
             raise SkipTest('This test is only an issue in django 1.8+')
-        from django.db.transaction import get_connection
-        connection = get_connection()
-        connection._patched = False
+
         choice = Choice.objects.get()
         choice.votes = 42
-
         tester = import_module("polls.tests.transaction_tester")
-
         choice_pk = tester.callable_reset_choice(choice=choice)
         self.assertEqual(choice_pk, choice.pk)
         choice = Choice.objects.get()
@@ -55,14 +47,10 @@ class TransactionTestCase(TestCase):
     def test_context_manager_atomic(self):
         if django.VERSION < (1, 7):
             raise SkipTest('This test is only an issue in django 1.8+')
-        from django.db.transaction import get_connection
-        connection = get_connection()
-        connection._patched = False
+
         choice = Choice.objects.get()
         choice.votes = 42
-
         tester = import_module("polls.tests.transaction_tester")
-
         choice_pk = tester.ctxt_man_reset_choice(choice=choice)
         self.assertEqual(choice_pk, choice.pk)
         choice = Choice.objects.get()
