@@ -1,3 +1,10 @@
+1.0.10
+-------
+
+released 2016-02-01
+
+* Fixed the django 1.8 dummy atomic to work as ``@atomic``
+
 1.0.9
 -------
 
