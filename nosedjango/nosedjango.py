@@ -50,7 +50,7 @@ def _dummy(*args, **kwargs):
     return
 
 
-class ContextDecorator(object):
+class DummyContextDecorator(object):
     """
     A base class that enables a context manager to also be used as a decorator.
     """
@@ -73,11 +73,7 @@ class ContextDecorator(object):
 def _dummy_context_manager(using=None, savepoint=True):
     # Bare decorator: @atomic -- although the first argument is called
     # `using`, it's actually the function being decorated.
-    if callable(using):
-        return ContextDecorator(None, savepoint)(using)
-    # Decorator: @atomic(...) or context manager: with atomic(...): ...
-    else:
-        return ContextDecorator(using, savepoint)
+    return DummyContextDecorator(using, savepoint)
 
 
 class NoseDjango(Plugin):
