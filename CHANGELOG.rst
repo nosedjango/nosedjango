@@ -1,3 +1,10 @@
+1.0.11
+-------
+
+released 2016-02-03
+
+* Reenabled transaction support for Django 1.8
+
 1.0.10
 -------
 
