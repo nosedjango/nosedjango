@@ -490,8 +490,6 @@ class NoseDjango(Plugin):
             settings.ROOT_URLCONF = test.context.urls
             clear_url_caches()
         self.call_plugins_method('afterUrlConfLoad', settings, test)
-        if self.django_version > self.DJANGO_1_7:
-            self.disable_transaction_support()
         if use_transaction_isolation:
             self.restore_transaction_support()
             self.enter_atomics()
