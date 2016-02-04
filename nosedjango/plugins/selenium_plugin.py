@@ -135,13 +135,13 @@ class SeleniumPlugin(Plugin):
 
     def finalize(self, result):
         if self._track_stats and self.times:
-            print '-' * 80
+            print('-' * 80)
             if self._track_stats == 'runtime':
                 order = 1
             elif self._track_stats == 'trips':
                 order = 2
             pprint(sorted(self.times, key=lambda x: x[order]))
-            print '-' * 80
+            print('-' * 80)
         driver = self.get_driver()
         if driver:
             driver.quit()
@@ -227,7 +227,7 @@ class SeleniumPlugin(Plugin):
         try:
             driver = getattr(test.test, driver_attr)
         except AttributeError:
-            print "Error attempting to take failure screenshot"
+            print("Error attempting to take failure screenshot")
             return
 
         # Make the failure ss directory if it doesn't exist

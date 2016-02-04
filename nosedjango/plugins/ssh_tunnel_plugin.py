@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import signal
+from __future__ import print_function
 
 from nosedjango.plugins.base_plugin import Plugin
 
@@ -97,4 +98,4 @@ class SshTunnelPlugin(Plugin):
             os.kill(self._reverse_tunnel.pid, signal.SIGKILL)
             self._reverse_tunnel.wait()
 
-            print sys.stderr, "Error killing ssh tunnel"
+            print("Error killing ssh tunnel", file=sys.stderr)

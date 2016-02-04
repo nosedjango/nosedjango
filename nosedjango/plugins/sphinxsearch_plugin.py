@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from __future__ import print_function
 
 from nosedjango.plugins.base_plugin import Plugin
 
@@ -127,10 +128,10 @@ class SphinxSearchPlugin(Plugin):
             stderr=subprocess.PIPE,
         )
         if indexer.wait() != 0:
-            print "Sphinx Indexing Problem"
+            print("Sphinx Indexing Problem")
             stdout, stderr = indexer.communicate()
-            print "stdout: %s" % stdout
-            print "stderr: %s" % stderr
+            print("stdout: %s" % stdout)
+            print("stderr: %s" % stderr)
 
     def _start_searchd(self, config):
         self._searchd = subprocess.Popen(
@@ -140,10 +141,10 @@ class SphinxSearchPlugin(Plugin):
 
         returned = self._searchd.poll()
         if returned is not None:
-            print "Sphinx Search unavailable. searchd exited with code: %s" % returned  # noqa
+            print("Sphinx Search unavailable. searchd exited with code: %s" % returned)  # noqa
             stdout, stderr = self._searchd.communicate()
-            print "stdout: %s" % stdout
-            print "stderr: %s" % stderr
+            print("stdout: %s" % stdout)
+            print("stderr: %s" % stderr)
 
         self._wait_for_connection(self.searchd_port)
 
@@ -170,7 +171,7 @@ class SphinxSearchPlugin(Plugin):
             connected = True
 
         if not connected:
-            print >> sys.stderr, "Error connecting to sphinx searchd"
+            print("Error connecting to sphinx searchd", file=sys.stderr)
 
     def _stop_searchd(self):
         try:
@@ -178,4 +179,4 @@ class SphinxSearchPlugin(Plugin):
                 os.kill(self._searchd.pid, signal.SIGKILL)
                 self._searchd.wait()
         except AttributeError:
-            print sys.stderr, "Error stopping sphinx search daemon"
+            print("Error stopping sphinx search daemon", file=sys.stderr)
