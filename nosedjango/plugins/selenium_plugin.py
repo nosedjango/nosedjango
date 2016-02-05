@@ -1,7 +1,10 @@
 import os
 import logging
 import subprocess
-import urllib2
+try:
+    from urllib2 import URLError
+except ImportError:
+    from urllib.error import URLError
 import httplib
 import time
 from pprint import pprint
@@ -121,14 +124,14 @@ class SeleniumPlugin(Plugin):
                         'WINDOWS',
                     )
                     break
-                except urllib2.URLError:
+                except URLError:
                     time.sleep(step)
                     current += step
                 except httplib.BadStatusLine:
                     self._driver = None
                     break
             if current >= timeout:
-                raise urllib2.URLError('timeout')
+                raise URLError('timeout')
 
         monkey_patch_methods(self._driver)
         return self._driver
