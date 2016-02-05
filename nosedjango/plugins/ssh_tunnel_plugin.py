@@ -1,8 +1,9 @@
+from __future__ import print_function
+
 import os
 import subprocess
 import sys
 import signal
-from __future__ import print_function
 
 from nosedjango.plugins.base_plugin import Plugin
 
