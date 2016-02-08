@@ -98,6 +98,7 @@ class SeleniumTestCase(RunTests):
         '--with-selenium',
     ]
 
+
 class SeleniumBinaryTestCase(RunTests):
     label = 'Selenium Binary Option'
     test_app = 'nosedjangotests.selenium_binary_tests'
