@@ -141,6 +141,8 @@ setup(
     dependency_links=['http://bitbucket.org/jpellerin/nose/get/release_0.11.4.zip#egg=nose-0.11.4.dev'],  # noqa
     url="http://github.com/nosedjango/nosedjango",
     license='GNU LGPL',
+    # We're using find_packages here to ensure that the plugin package as well
+    # as the main package are included in the distribution
     packages=find_packages(exclude=['nosedjangotests', 'nosedjangotests.*']),
     zip_safe=False,
     cmdclass={
