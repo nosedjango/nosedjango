@@ -2,7 +2,7 @@ import codecs
 import os
 import sys
 
-from setuptools import setup, Command
+from setuptools import setup, find_packages, Command
 
 
 class RunTestBase(Command):
@@ -141,7 +141,7 @@ setup(
     dependency_links=['http://bitbucket.org/jpellerin/nose/get/release_0.11.4.zip#egg=nose-0.11.4.dev'],  # noqa
     url="http://github.com/nosedjango/nosedjango",
     license='GNU LGPL',
-    packages=['nosedjango'],
+    packages=find_packages(exclude=['nosedjangotests', 'nosedjangotests.*']),
     zip_safe=False,
     cmdclass={
         'test_sqlite': SQLiteTestCase,
