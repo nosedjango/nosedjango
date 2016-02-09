@@ -364,8 +364,13 @@ class NoseDjango(Plugin):
         from django.conf import settings
         from django.db import connections
         from django.core import mail
+        from django.core.urlresolvers import clear_url_caches
 
         mail.outbox = []
+
+        if hasattr(test.context, '_nosedjango_root_urlconf'):
+            settings.ROOT_URLCONF = test.context._nosedjango_root_urlconf
+            clear_url_caches()
 
         use_transaction_isolation = self.should_use_transaction_isolation(
             test, settings)
@@ -486,7 +491,7 @@ class NoseDjango(Plugin):
            hasattr(test.context, 'urls'):
             # We have to use this slightly awkward syntax due to the fact
             # that we're using *args and **kwargs together.
-            self.old_urlconf = settings.ROOT_URLCONF
+            test.context._nosedjango_root_urlconf = settings.ROOT_URLCONF
             settings.ROOT_URLCONF = test.context.urls
             clear_url_caches()
         self.call_plugins_method('afterUrlConfLoad', settings, test)
@@ -508,7 +513,6 @@ class NoseDjango(Plugin):
         from django.test.utils import teardown_test_environment
         from django.db import connection
         from django.conf import settings
-        from django.core.urlresolvers import clear_url_caches
 
         self.call_plugins_method('beforeDestroyTestDb', settings, connection)
         try:
@@ -525,10 +529,6 @@ class NoseDjango(Plugin):
             'beforeTeardownTestEnv', settings, teardown_test_environment)
         teardown_test_environment()
         self.call_plugins_method('afterTeardownTestEnv', settings)
-
-        if hasattr(self, 'old_urlconf'):
-            settings.ROOT_URLCONF = self.old_urlconf
-            clear_url_caches()
 
     def report(self, stream):
         stream.writeln("Loaded fixtures %s times" % self._num_fixture_loads)
