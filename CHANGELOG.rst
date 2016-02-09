@@ -1,3 +1,9 @@
+dev
+---
+
+* ``ROOT_URLCONF`` is now being restored after every test, if a custom ``urls``
+  was set
+
 1.0.11
 -------
 
