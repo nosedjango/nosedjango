@@ -63,14 +63,6 @@ class RunTests(RunTestBase):
         TestProgram(argv=test_args, exit=True)
 
 
-class PluginTestCase(RunTests):
-    test_app = 'tests'
-    label = 'plugin'
-    args = [
-        '--with-django-sqlite',
-    ]
-
-
 class SQLiteTestCase(RunTests):
     label = 'sqlite'
     args = [
@@ -152,7 +144,6 @@ setup(
     packages=['nosedjango'],
     zip_safe=False,
     cmdclass={
-        'test_plugin': PluginTestCase,
         'test_sqlite': SQLiteTestCase,
         'test_multiprocess': MultiProcessTestCase,
         'test_mysql': MySQLTestCase,
