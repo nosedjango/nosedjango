@@ -13,7 +13,7 @@ env:
     - TOX_ENV=py26-nose1.3.X-django1.4.X-south
     - TOX_ENV=py27-nose1.3.X-django1.4.X-south
     - TOX_ENV=py27-nose1.3.X-django1.8.X
-    - TOX_ENV=py35-nose1.3.X-django1.8.X
+    - TOX_ENV=py34-nose1.3.X-django1.8.X
     - TOX_ENV=docs
     - TOX_ENV=flake8
 install:
