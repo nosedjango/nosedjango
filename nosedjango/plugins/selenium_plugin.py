@@ -5,7 +5,11 @@ try:
     from urllib2 import URLError
 except ImportError:
     from urllib.error import URLError
-import httplib
+try:
+    from httplib import BadStatusLine
+except ImportError:
+    from http.client import BadStatusLine
+
 import time
 from pprint import pprint
 
@@ -127,7 +131,7 @@ class SeleniumPlugin(Plugin):
                 except URLError:
                     time.sleep(step)
                     current += step
-                except httplib.BadStatusLine:
+                except BadStatusLine:
                     self._driver = None
                     break
             if current >= timeout:
