@@ -29,7 +29,7 @@ class RunTests(RunTestBase):
         try:
             import selenium  # noqa
         except ImportError:
-            print "Selenium not installed. Skipping tests."
+            print("Selenium not installed. Skipping tests.")
             sys.exit(0)
 
     def run(self):
@@ -44,12 +44,12 @@ class RunTests(RunTestBase):
         try:
             from nose.core import TestProgram
             import nosedjango
-            print nosedjango.__version__
+            print(nosedjango.__version__)
         except ImportError:
-            print 'nose and nosedjango are required to run this test suite'
+            print('nose and nosedjango are required to run this test suite')
             sys.exit(1)
 
-        print "Running tests with {label}".format(label=self.label)
+        print("Running tests with {label}".format(label=self.label))
         self.verify_selenium()
 
         test_args = [

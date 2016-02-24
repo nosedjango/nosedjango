@@ -1,8 +1,15 @@
 import os
 import logging
 import subprocess
-import urllib2
-import httplib
+try:
+    from urllib2 import URLError
+except ImportError:
+    from urllib.error import URLError
+try:
+    from httplib import BadStatusLine
+except ImportError:
+    from http.client import BadStatusLine
+
 import time
 from pprint import pprint
 
@@ -121,27 +128,27 @@ class SeleniumPlugin(Plugin):
                         'WINDOWS',
                     )
                     break
-                except urllib2.URLError:
+                except URLError:
                     time.sleep(step)
                     current += step
-                except httplib.BadStatusLine:
+                except BadStatusLine:
                     self._driver = None
                     break
             if current >= timeout:
-                raise urllib2.URLError('timeout')
+                raise URLError('timeout')
 
         monkey_patch_methods(self._driver)
         return self._driver
 
     def finalize(self, result):
         if self._track_stats and self.times:
-            print '-' * 80
+            print('-' * 80)
             if self._track_stats == 'runtime':
                 order = 1
             elif self._track_stats == 'trips':
                 order = 2
             pprint(sorted(self.times, key=lambda x: x[order]))
-            print '-' * 80
+            print('-' * 80)
         driver = self.get_driver()
         if driver:
             driver.quit()
@@ -227,7 +234,7 @@ class SeleniumPlugin(Plugin):
         try:
             driver = getattr(test.test, driver_attr)
         except AttributeError:
-            print "Error attempting to take failure screenshot"
+            print("Error attempting to take failure screenshot")
             return
 
         # Make the failure ss directory if it doesn't exist

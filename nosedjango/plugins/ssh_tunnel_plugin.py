@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import subprocess
 import sys
@@ -97,4 +99,4 @@ class SshTunnelPlugin(Plugin):
             os.kill(self._reverse_tunnel.pid, signal.SIGKILL)
             self._reverse_tunnel.wait()
 
-            print sys.stderr, "Error killing ssh tunnel"
+            print("Error killing ssh tunnel", file=sys.stderr)
