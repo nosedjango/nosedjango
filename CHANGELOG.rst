@@ -1,3 +1,11 @@
+1.0.12
+------
+
+released 2016-02-09
+
+* ``ROOT_URLCONF`` is now being restored after every test, if a custom ``urls``
+  was set
+
 1.0.11
 -------
 
