@@ -4,6 +4,8 @@ import sys
 
 from setuptools import setup, find_packages, Command
 
+import tempfile
+
 
 class RunTestBase(Command):
     description = "Run the test suite from the tests dir."
@@ -98,6 +100,14 @@ class SeleniumTestCase(RunTests):
         '--with-selenium',
     ]
 
+class SeleniumAutoDownloadTestCase(RunTests):
+    label = 'Selenium'
+    test_app = 'nosedjangotests.selenium_autodownload_tests'
+    check_selenium = True
+    args = [
+        '--with-selenium',
+        '--autodownload-directory', tempfile.gettempdir(),
+    ]
 
 class SeleniumBinaryTestCase(RunTests):
     label = 'Selenium Binary Option'

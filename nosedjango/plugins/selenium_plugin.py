@@ -65,6 +65,14 @@ class SeleniumPlugin(Plugin):
             ),
             default=None,
         )
+        parser.add_option(
+            '--autodownload-directory',
+            help=(
+                'If specified, will automatically download files'
+                'into this directory.'
+            ),
+            default=None,
+        )
         Plugin.options(self, parser, env)
 
     def configure(self, options, config):
@@ -72,6 +80,8 @@ class SeleniumPlugin(Plugin):
             self.ss_dir = os.path.abspath(options.selenium_ss_dir)
         else:
             self.ss_dir = os.path.abspath('failure_screenshots')
+        if options.autodownload_directory:
+            self.download_directory = os.path.abspath(options.autodownload_directory)
         valid_browsers = ['firefox', 'internet_explorer', 'chrome']
         if options.driver_type not in valid_browsers:
             raise RuntimeError(
@@ -193,6 +203,7 @@ class SeleniumPlugin(Plugin):
         driver = self.get_driver()
         logging.getLogger().setLevel(logging.INFO)
         setattr(test.test, 'driver', driver)
+        setattr(test.test, 'downloads_dir', self.download_directory)
         # need to know the main window handle for cleaning up extra windows at
         # the end of each test
         if driver:
