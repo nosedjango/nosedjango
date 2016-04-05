@@ -16,6 +16,11 @@ class SeleniumTestCase(TransactionTestCase):
         )
 
         self.assertEqual(
+            firefox_profile.default_preferences['browser.helperApps.neverAsk.saveToDisk'],
+            'application/ourfakemimetype'
+        )
+
+        self.assertEqual(
             self.download_dir,
             tempfile.gettempdir()
         )

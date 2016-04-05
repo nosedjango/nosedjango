@@ -108,6 +108,7 @@ class SeleniumAutoDownloadTestCase(RunTests):
         '--with-selenium',
         '--with-django-sqlite',
         '--download-directory', tempfile.gettempdir(),
+        '--autodownload-mimetypes', 'application/ourfakemimetype',
     ]
 
 class SeleniumBinaryTestCase(RunTests):
