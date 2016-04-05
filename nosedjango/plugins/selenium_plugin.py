@@ -9,7 +9,6 @@ from pprint import pprint
 import nose.case
 from nosedjango.plugins.base_plugin import Plugin
 
-
 try:
     from urllib2 import URLError
 except ImportError:
@@ -18,13 +17,6 @@ try:
     from httplib import BadStatusLine
 except ImportError:
     from http.client import BadStatusLine
-
-import time
-from pprint import pprint
-
-import nose.case
-
-from nosedjango.plugins.base_plugin import Plugin
 
 
 class SeleniumPlugin(Plugin):
