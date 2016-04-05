@@ -160,6 +160,7 @@ setup(
         'test_multiprocess': MultiProcessTestCase,
         'test_mysql': MySQLTestCase,
         'test_selenium': SeleniumTestCase,
+        'test_selenium_autodownload': SeleniumAutoDownloadTestCase,
         'test_selenium_binary': SeleniumBinaryTestCase,
         'test_cherrypy': CherryPyLiveServerTestCase,
     },

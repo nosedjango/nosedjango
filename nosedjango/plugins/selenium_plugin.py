@@ -81,7 +81,9 @@ class SeleniumPlugin(Plugin):
         else:
             self.ss_dir = os.path.abspath('failure_screenshots')
         if options.autodownload_directory:
-            self.download_directory = os.path.abspath(options.autodownload_directory)
+            self.download_directory = os.path.abspath(
+                options.autodownload_directory
+            )
         valid_browsers = ['firefox', 'internet_explorer', 'chrome']
         if options.driver_type not in valid_browsers:
             raise RuntimeError(
