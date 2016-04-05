@@ -25,4 +25,9 @@ class SeleniumTestCase(TransactionTestCase):
             2
         )
 
+        self.assertEqual(
+            firefox_profile.default_preferences['browser.download.manager.showWhenStarting'],
+            False
+        )
+
 

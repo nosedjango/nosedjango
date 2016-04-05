@@ -100,9 +100,9 @@ class SeleniumTestCase(RunTests):
         '--with-selenium',
     ]
 
-class SeleniumAutoDownloadTestCase(RunTests):
+class SeleniumFirefoxProfileTestCase(RunTests):
     label = 'Selenium'
-    test_app = 'nosedjangotests.selenium_autodownload_tests'
+    test_app = 'nosedjangotests.selenium_firefox_profile_tests'
     check_selenium = True
     args = [
         '--with-selenium',
@@ -164,7 +164,7 @@ setup(
         'test_multiprocess': MultiProcessTestCase,
         'test_mysql': MySQLTestCase,
         'test_selenium': SeleniumTestCase,
-        'test_selenium_autodownload': SeleniumAutoDownloadTestCase,
+        'test_selenium_firefox_profile': SeleniumFirefoxProfileTestCase,
         'test_selenium_binary': SeleniumBinaryTestCase,
         'test_cherrypy': CherryPyLiveServerTestCase,
     },
