@@ -9,9 +9,15 @@ class SeleniumTestCase(TransactionTestCase):
         driver = self.driver
         driver.get('http://www.google.com')
         firefox_profile = self.driver.firefox_profile
+
         self.assertEqual(
-            firefox_profile.default_preference['browser.download.dir'],
-            tempfile.gettmpdir()
+            firefox_profile.default_preferences['browser.download.dir'],
+            tempfile.gettempdir()
+        )
+
+        self.assertEqual(
+            self.download_dir,
+            tempfile.gettempdir()
         )
 
 

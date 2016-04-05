@@ -106,7 +106,8 @@ class SeleniumAutoDownloadTestCase(RunTests):
     check_selenium = True
     args = [
         '--with-selenium',
-        '--autodownload-directory', tempfile.gettempdir(),
+        '--with-django-sqlite',
+        '--download-directory', tempfile.gettempdir(),
     ]
 
 class SeleniumBinaryTestCase(RunTests):

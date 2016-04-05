@@ -66,10 +66,16 @@ class SeleniumPlugin(Plugin):
             default=None,
         )
         parser.add_option(
-            '--autodownload-directory',
+            '--download-directory',
             help=(
-                'If specified, will automatically download files'
-                'into this directory.'
+                'The download directory to use'
+            ),
+            default=None,
+        )
+        parser.add_option(
+            '--autodownload-mimetypes',
+            help=(
+                'If specified, will automatically download these mimetypes'
             ),
             default=None,
         )
@@ -80,15 +86,17 @@ class SeleniumPlugin(Plugin):
             self.ss_dir = os.path.abspath(options.selenium_ss_dir)
         else:
             self.ss_dir = os.path.abspath('failure_screenshots')
-        if options.autodownload_directory:
-            self.download_directory = os.path.abspath(
-                options.autodownload_directory
+        if options.download_directory:
+            self._download_directory = os.path.abspath(
+                options.download_directory
             )
+
         valid_browsers = ['firefox', 'internet_explorer', 'chrome']
         if options.driver_type not in valid_browsers:
             raise RuntimeError(
                 '--driver-type must be one of: %s' % ' '.join(valid_browsers)
             )
+        self._autodownload_mimetypes = options.autodownload_mimetypes
         self._firefox_binary = options.firefox_binary
         self._driver_type = options.driver_type.replace('_', ' ')
         self._remote_server_address = options.remote_server_address
@@ -117,12 +125,40 @@ class SeleniumPlugin(Plugin):
             return self._driver
 
         if self._driver_type == 'firefox':
+            from selenium.webdriver.firefox.firefox_profile import FirefoxProfile  # noqa
+            fp = FirefoxProfile()
+
+            if self._download_directory:
+                fp.set_preference(
+                    "browser.download.dir",
+                    self._download_directory,
+                )
+
+            if self._autodownload_mimetypes:
+                fp.set_preference(
+                    "browser.download.folderList",
+                    2,
+                )
+                fp.set_preference(
+                    "browser.download.manager.showWhenStarting",
+                    False,
+                )
+                fp.set_preference(
+                    "browser.helperApps.neverAsk.saveToDisk",
+                    self._autodownload_mimetypes,
+                )
+
+            self._profile = fp
+
             if self._firefox_binary is None:
-                self._driver = FirefoxWebDriver()
+                self._driver = FirefoxWebDriver(firefox_profile=self._profile)
             else:
                 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary  # noqa
                 binary = FirefoxBinary(self._firefox_binary)
-                self._driver = FirefoxWebDriver(firefox_binary=binary)
+                self._driver = FirefoxWebDriver(
+                    firefox_profile=self._profile,
+                    firefox_binary=binary
+                )
         elif self._driver_type == 'chrome':
             self._driver = ChromeDriver()
         else:
@@ -205,7 +241,7 @@ class SeleniumPlugin(Plugin):
         driver = self.get_driver()
         logging.getLogger().setLevel(logging.INFO)
         setattr(test.test, 'driver', driver)
-        setattr(test.test, 'downloads_dir', self.download_directory)
+        setattr(test.test, 'download_dir', self._download_directory)
         # need to know the main window handle for cleaning up extra windows at
         # the end of each test
         if driver:
