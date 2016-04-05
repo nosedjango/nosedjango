@@ -21,8 +21,8 @@ class SeleniumTestCase(TransactionTestCase):
         )
 
         self.assertEqual(
-            self.download_dir,
-            tempfile.gettempdir()
+            firefox_profile.default_preferences['browser.download.folderList'],
+            2
         )
 
 

@@ -1,6 +1,15 @@
-import os
+# coding: utf-8
 import logging
+import os
 import subprocess
+import time
+from ast import literal_eval
+from pprint import pprint
+
+import nose.case
+from nosedjango.plugins.base_plugin import Plugin
+
+
 try:
     from urllib2 import URLError
 except ImportError:
@@ -66,18 +75,12 @@ class SeleniumPlugin(Plugin):
             default=None,
         )
         parser.add_option(
-            '--download-directory',
+            '--ff-profile',
             help=(
-                'The download directory to use'
+                'Specify overrides for the FireFox profile'
             ),
             default=None,
-        )
-        parser.add_option(
-            '--autodownload-mimetypes',
-            help=(
-                'If specified, will automatically download these mimetypes'
-            ),
-            default=None,
+            action='append'
         )
         Plugin.options(self, parser, env)
 
@@ -86,17 +89,13 @@ class SeleniumPlugin(Plugin):
             self.ss_dir = os.path.abspath(options.selenium_ss_dir)
         else:
             self.ss_dir = os.path.abspath('failure_screenshots')
-        if options.download_directory:
-            self._download_directory = os.path.abspath(
-                options.download_directory
-            )
 
         valid_browsers = ['firefox', 'internet_explorer', 'chrome']
         if options.driver_type not in valid_browsers:
             raise RuntimeError(
                 '--driver-type must be one of: %s' % ' '.join(valid_browsers)
             )
-        self._autodownload_mimetypes = options.autodownload_mimetypes
+        self._ff_profile_overrides = options.ff_profile
         self._firefox_binary = options.firefox_binary
         self._driver_type = options.driver_type.replace('_', ' ')
         self._remote_server_address = options.remote_server_address
@@ -128,25 +127,10 @@ class SeleniumPlugin(Plugin):
             from selenium.webdriver.firefox.firefox_profile import FirefoxProfile  # noqa
             fp = FirefoxProfile()
 
-            if self._download_directory:
-                fp.set_preference(
-                    "browser.download.dir",
-                    self._download_directory,
-                )
-
-            if self._autodownload_mimetypes:
-                fp.set_preference(
-                    "browser.download.folderList",
-                    2,
-                )
-                fp.set_preference(
-                    "browser.download.manager.showWhenStarting",
-                    False,
-                )
-                fp.set_preference(
-                    "browser.helperApps.neverAsk.saveToDisk",
-                    self._autodownload_mimetypes,
-                )
+            for override in self._ff_profile_overrides:
+                pref, value = override.split('=')
+                print value
+                fp.set_preference(pref, literal_eval(value))
 
             self._profile = fp
 
@@ -241,7 +225,6 @@ class SeleniumPlugin(Plugin):
         driver = self.get_driver()
         logging.getLogger().setLevel(logging.INFO)
         setattr(test.test, 'driver', driver)
-        setattr(test.test, 'download_dir', self._download_directory)
         # need to know the main window handle for cleaning up extra windows at
         # the end of each test
         if driver:

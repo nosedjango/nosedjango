@@ -107,8 +107,10 @@ class SeleniumAutoDownloadTestCase(RunTests):
     args = [
         '--with-selenium',
         '--with-django-sqlite',
-        '--download-directory', tempfile.gettempdir(),
-        '--autodownload-mimetypes', 'application/ourfakemimetype',
+        '--ff-profile', 'browser.helperApps.neverAsk.saveToDisk="application/ourfakemimetype"',
+        '--ff-profile', 'browser.download.dir="{0}"'.format(tempfile.gettempdir()),
+        '--ff-profile', 'browser.download.folderList=2',
+        '--ff-profile', 'browser.download.manager.showWhenStarting=False'
     ]
 
 class SeleniumBinaryTestCase(RunTests):
