@@ -1,3 +1,13 @@
+1.0.13
+------
+
+released 2016-04-06
+
+* Selenium plugin can now specify multiple ``--ff-profile`` args in order to
+  override Firefox profile settings.  For example,
+  ``--ff-profile browser.helperApps.neverAsk.saveToDisk="application/ourfakemimetype"``
+  to disable download prompts for a mimetype.
+
 1.0.12
 ------
 

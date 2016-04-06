@@ -1,6 +1,14 @@
-import os
+# coding: utf-8
 import logging
+import os
 import subprocess
+import time
+from ast import literal_eval
+from pprint import pprint
+
+import nose.case
+from nosedjango.plugins.base_plugin import Plugin
+
 try:
     from urllib2 import URLError
 except ImportError:
@@ -9,13 +17,6 @@ try:
     from httplib import BadStatusLine
 except ImportError:
     from http.client import BadStatusLine
-
-import time
-from pprint import pprint
-
-import nose.case
-
-from nosedjango.plugins.base_plugin import Plugin
 
 
 class SeleniumPlugin(Plugin):
@@ -65,6 +66,14 @@ class SeleniumPlugin(Plugin):
             ),
             default=None,
         )
+        parser.add_option(
+            '--ff-profile',
+            help=(
+                'Specify overrides for the FireFox profile'
+            ),
+            default=None,
+            action='append'
+        )
         Plugin.options(self, parser, env)
 
     def configure(self, options, config):
@@ -72,11 +81,13 @@ class SeleniumPlugin(Plugin):
             self.ss_dir = os.path.abspath(options.selenium_ss_dir)
         else:
             self.ss_dir = os.path.abspath('failure_screenshots')
+
         valid_browsers = ['firefox', 'internet_explorer', 'chrome']
         if options.driver_type not in valid_browsers:
             raise RuntimeError(
                 '--driver-type must be one of: %s' % ' '.join(valid_browsers)
             )
+        self._ff_profile_overrides = options.ff_profile
         self._firefox_binary = options.firefox_binary
         self._driver_type = options.driver_type.replace('_', ' ')
         self._remote_server_address = options.remote_server_address
@@ -105,12 +116,24 @@ class SeleniumPlugin(Plugin):
             return self._driver
 
         if self._driver_type == 'firefox':
+            from selenium.webdriver.firefox.firefox_profile import FirefoxProfile  # noqa
+            fp = FirefoxProfile()
+
+            for override in self._ff_profile_overrides:
+                pref, value = override.split('=')
+                fp.set_preference(pref, literal_eval(value))
+
+            self._profile = fp
+
             if self._firefox_binary is None:
-                self._driver = FirefoxWebDriver()
+                self._driver = FirefoxWebDriver(firefox_profile=self._profile)
             else:
                 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary  # noqa
                 binary = FirefoxBinary(self._firefox_binary)
-                self._driver = FirefoxWebDriver(firefox_binary=binary)
+                self._driver = FirefoxWebDriver(
+                    firefox_profile=self._profile,
+                    firefox_binary=binary
+                )
         elif self._driver_type == 'chrome':
             self._driver = ChromeDriver()
         else:

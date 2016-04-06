@@ -4,6 +4,8 @@ import sys
 
 from setuptools import setup, find_packages, Command
 
+import tempfile
+
 
 class RunTestBase(Command):
     description = "Run the test suite from the tests dir."
@@ -98,6 +100,18 @@ class SeleniumTestCase(RunTests):
         '--with-selenium',
     ]
 
+class SeleniumFirefoxProfileTestCase(RunTests):
+    label = 'Selenium'
+    test_app = 'nosedjangotests.selenium_firefox_profile_tests'
+    check_selenium = True
+    args = [
+        '--with-selenium',
+        '--with-django-sqlite',
+        '--ff-profile', 'browser.helperApps.neverAsk.saveToDisk="application/ourfakemimetype"',
+        '--ff-profile', 'browser.download.dir="{0}"'.format(tempfile.gettempdir()),
+        '--ff-profile', 'browser.download.folderList=2',
+        '--ff-profile', 'browser.download.manager.showWhenStarting=False'
+    ]
 
 class SeleniumBinaryTestCase(RunTests):
     label = 'Selenium Binary Option'
@@ -150,6 +164,7 @@ setup(
         'test_multiprocess': MultiProcessTestCase,
         'test_mysql': MySQLTestCase,
         'test_selenium': SeleniumTestCase,
+        'test_selenium_firefox_profile': SeleniumFirefoxProfileTestCase,
         'test_selenium_binary': SeleniumBinaryTestCase,
         'test_cherrypy': CherryPyLiveServerTestCase,
     },
