@@ -121,7 +121,6 @@ class SeleniumPlugin(Plugin):
 
             for override in self._ff_profile_overrides:
                 pref, value = override.split('=')
-                print value
                 fp.set_preference(pref, literal_eval(value))
 
             self._profile = fp
