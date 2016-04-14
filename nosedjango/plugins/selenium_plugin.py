@@ -71,7 +71,7 @@ class SeleniumPlugin(Plugin):
             help=(
                 'Specify overrides for the FireFox profile'
             ),
-            default=None,
+            default=[],
             action='append'
         )
         Plugin.options(self, parser, env)
