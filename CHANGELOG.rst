@@ -1,3 +1,12 @@
+1.1.0
+------
+
+released TBD
+
+* Dropped support for Python 2.6.
+* Dropped advertised support for south
+* Added support for Django 1.11
+
 1.0.13
 ------
 
