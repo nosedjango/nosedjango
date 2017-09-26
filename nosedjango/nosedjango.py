@@ -289,7 +289,10 @@ class NoseDjango(Plugin):
             self.call_plugins_method(
                 'beforeTestSetup', settings, setup_test_environment,
                 connection)
-        setup_test_environment()
+        try:
+            setup_test_environment()
+        except RuntimeError:  # Django 1.11 + multiprocess this happens.
+            pass
         import django
         if hasattr(django, 'setup'):
             django.setup()
