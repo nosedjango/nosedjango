@@ -1,7 +1,7 @@
 1.1.0
 ------
 
-released TBD
+released 2017-09-27
 
 * Dropped support for Python 2.6.
 * Dropped advertised support for south
